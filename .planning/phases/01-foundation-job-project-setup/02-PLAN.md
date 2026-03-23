@@ -68,6 +68,10 @@ must_haves:
       to: "templates/jobs/detail.html"
       via: "job card click links to detail view"
       pattern: "/jobs/\\{id\\}"
+    - from: "templates/jobs/form.html"
+      to: "src/app/routes/clients.py"
+      via: "Link to /clients/create for first-time client creation"
+      pattern: "/clients/create"
 ---
 
 <objective>
@@ -266,8 +270,16 @@ from sqlalchemy.exc import IntegrityError
 from ..db import get_session
 from ..models import Client
 from ..schemas import ClientCreate, ClientRead
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from pathlib import Path
+from fastapi import Request
 
 router = APIRouter(prefix="/clients", tags=["clients"])
+
+# Template setup
+templates_dir = Path(__file__).parent.parent.parent / "templates"
+templates = Jinja2Templates(directory=str(templates_dir))
 
 @router.post("/", response_model=ClientRead)
 def create_client(
@@ -299,6 +311,18 @@ def get_client(
     if not client:
         raise HTTPException(status_code=404, detail="Client not found")
     return client
+
+@router.get("/create", response_class=HTMLResponse)
+def client_create_form(
+    request: Request,
+    session: Session = Depends(get_session),
+):
+    """Render client creation form"""
+    return templates.TemplateResponse("clients/create.html", {
+        "request": request,
+        "errors": {},
+    })
+
 ```
 
 Notes:
@@ -1060,6 +1084,14 @@ def jobs_list_view(
         .where(Job.status != JobStatus.closed)
         .order_by(Job.created_at.desc())
     ).all()
+    # Deserialize JSON columns for all jobs in case SQLAlchemy returns strings
+    import json
+    for job in jobs:
+        if isinstance(job.target_industries, str):
+            job.target_industries = json.loads(job.target_industries) if job.target_industries else []
+        if isinstance(job.target_company_types, str):
+            job.target_company_types = json.loads(job.target_company_types) if job.target_company_types else []
+    
     return templates.TemplateResponse("jobs/list.html", {"request": request, "jobs": jobs})
 
 @router.get("/create", response_class=HTMLResponse)
@@ -1107,6 +1139,13 @@ def job_detail_view(
         raise HTTPException(status_code=404, detail="Job not found")
 
     client = session.exec(select(Client).where(Client.id == job.client_id)).first()
+    # Deserialize JSON columns in case SQLAlchemy returns strings
+    import json
+    if isinstance(job.target_industries, str):
+        job.target_industries = json.loads(job.target_industries) if job.target_industries else []
+    if isinstance(job.target_company_types, str):
+        job.target_company_types = json.loads(job.target_company_types) if job.target_company_types else []
+    
     return templates.TemplateResponse("jobs/detail.html", {
         "request": request,
         "job": job,
