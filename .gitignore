@@ -1,0 +1,11 @@
+*.db
+*.db-journal
+.env
+__pycache__/
+.pytest_cache/
+.venv/
+dist/
+build/
+*.egg-info/
+.DS_Store
+*.pyc
