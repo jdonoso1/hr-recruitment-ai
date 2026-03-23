@@ -5,28 +5,32 @@
 
 ---
 
-## Phase 1 — Foundation: Job & Project Setup
+## Phase 1: Foundation — Job & Project Setup
 **Goal:** Consultant can create a job, define the search scope, and have everything stored correctly for the AI agents to work from.
 
 **Requirements covered:** JOB-01, JOB-02, JOB-03, JOB-04
 
-### Plans
+**Plans:** 2 plans in 2 waves
 
-**1.1 — Project scaffold & data models**
-- Python project structure (FastAPI + SQLite/PostgreSQL)
-- Data models: Job, Company, Candidate, OutreachMessage, InterviewNote
-- Basic CLI or web scaffold to verify models work
+### Plan 01 — Project scaffold & SQLModel data models
+- Python project structure with uv (FastAPI + SQLite)
+- SQLModel data models for Client and Job with all JOB-01 and JOB-02 fields
+- Database layer with SQLAlchemy engine and session management
+- Database initialization via FastAPI lifespan event
 
-**1.2 — Job management UI**
-- Create/edit/archive job form
-- Target industry + company type definition (free text + tags)
-- Job list dashboard with status per job (Hunting / Shortlisting / Interviewing / Closed)
+### Plan 02 — Job management API routes and UI
+- FastAPI routes for job CRUD (create, list, detail, archive)
+- Jinja2 templates with Tailwind CSS and HTMX for interactive UI
+- Job creation form with all required fields
+- Job dashboard with status badges
+- Job detail view and edit form
+- Archive action with HTMX POST request
 
-**Verification:** Consultant can create a real job for a real client, define target industries, and see it in the dashboard.
+**Verification:** Consultant can create a real job for a real client, define target industries, and see it in the dashboard. Job can be archived via UI button.
 
 ---
 
-## Phase 2 — Hunting & Outreach: AI Candidate Discovery
+## Phase 2: Hunting & Outreach — AI Candidate Discovery
 **Goal:** Given a job, AI identifies target companies, finds the right people, and drafts personalized outreach. Consultant reviews and approves before anything is sent.
 
 **Requirements covered:** HUNT-01, HUNT-02, HUNT-03, HUNT-04, OUTR-01, OUTR-02, OUTR-03, OUTR-04
@@ -53,7 +57,7 @@
 
 ---
 
-## Phase 3 — Classification & Client Presentation
+## Phase 3: Classification & Client Presentation
 **Goal:** Candidate profiles are scored automatically, classified with the correct tags, and exported cleanly for client review.
 
 **Requirements covered:** CAND-01 through CAND-05, PRES-01, PRES-02, PRES-03
@@ -79,7 +83,7 @@
 
 ---
 
-## Phase 4 — Interview Informe & Notifications
+## Phase 4: Interview Informe & Notifications
 **Goal:** After interviews, AI generates the structured informe report and WhatsApp notifications keep the consultant informed without switching contexts.
 
 **Requirements covered:** INTV-01 through INTV-04, NOTF-01, NOTF-02
@@ -126,3 +130,4 @@ This is a deployable, sellable product for the first client.
 
 ---
 *Roadmap created: 2026-03-23*
+*Last updated: 2026-03-23 — Phase 1 plans finalized*
