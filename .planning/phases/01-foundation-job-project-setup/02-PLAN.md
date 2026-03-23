@@ -17,7 +17,7 @@ files_modified:
   - static/style.css
   - src/app/schemas.py
 autonomous: true
-requirements: [JOB-01, JOB-03, JOB-04]
+requirements: [JOB-01, JOB-02, JOB-03, JOB-04]
 user_setup: []
 
 must_haves:

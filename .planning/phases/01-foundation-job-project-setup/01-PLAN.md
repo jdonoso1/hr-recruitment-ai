@@ -12,8 +12,12 @@ files_modified:
   - src/app/__init__.py
   - .env.example
   - .gitignore
+  - tests/__init__.py
+  - tests/conftest.py
+  - tests/test_models.py
+  - tests/test_routes.py
 autonomous: true
-requirements: [JOB-01, JOB-02]
+requirements: [JOB-01, JOB-02, JOB-03, JOB-04]
 user_setup: []
 
 must_haves:
@@ -21,14 +25,16 @@ must_haves:
     - "Python project is initialized with uv tooling and FastAPI dependency"
     - "SQLModel data models exist for Client and Job with all JOB-01 and JOB-02 fields"
     - "Job model has JSON columns for target_industries and target_company_types"
+    - "Job model includes JobStatus enum for JOB-03 pipeline tracking"
     - "Database connection is established and tables can be created"
     - "Project structure follows FastAPI conventions (main.py, models.py, db.py)"
+    - "Test infrastructure exists with pytest fixtures, test stubs, and conftest configuration"
   artifacts:
     - path: "pyproject.toml"
       provides: "Project metadata, Python version, all dependencies (FastAPI, SQLModel, uvicorn, pytest, pytest-asyncio)"
-      must_contain: ["fastapi", "sqlmodel", "uvicorn", "pytest"]
+      must_contain: ["fastapi", "sqlmodel", "uvicorn", "pytest", "pytest-asyncio"]
     - path: "src/app/models.py"
-      provides: "SQLModel Client and Job models with all fields"
+      provides: "SQLModel Client and Job models with all fields, JobStatus enum"
       exports: ["Client", "Job", "JobStatus"]
       min_lines: 50
     - path: "src/app/db.py"
@@ -38,6 +44,15 @@ must_haves:
     - path: "src/app/main.py"
       provides: "FastAPI app instance with lifespan event to create tables on startup"
       min_lines: 20
+    - path: "tests/conftest.py"
+      provides: "Pytest configuration, SQLite test fixture, database session fixture"
+      must_contain: ["@pytest.fixture", "sqlite:///:memory:", "yield"]
+    - path: "tests/test_models.py"
+      provides: "Test module stubs for Client and Job model tests"
+      min_lines: 5
+    - path: "tests/test_routes.py"
+      provides: "Test module stubs for route tests (filled in Plan 02)"
+      min_lines: 5
   key_links:
     - from: "src/app/main.py"
       to: "src/app/db.py"
@@ -51,14 +66,18 @@ must_haves:
       to: "src/app/models.py"
       via: "create_all uses model metadata"
       pattern: "SQLModel.metadata.create_all"
+    - from: "tests/conftest.py"
+      to: "src/app/models.py"
+      via: "import models for table creation"
+      pattern: "from src.app.models import"
 ---
 
 <objective>
-Set up Phase 1 project foundation: initialize FastAPI project with uv, create SQLModel data models (Client + Job) with all JOB-01 and JOB-02 fields, establish database connection with SQLite, and prepare for API route implementation.
+Set up Phase 1 project foundation: initialize FastAPI project with uv, create SQLModel data models (Client + Job) with all JOB-01, JOB-02, JOB-03, JOB-04 fields, establish database connection with SQLite, create test infrastructure with pytest fixtures, and prepare for API route implementation.
 
-Purpose: Build the data layer and project structure that all subsequent Phase 1 tasks depend on. Locked decisions (SQLModel, SQLite, uv) are implemented here.
+Purpose: Build the data layer, test infrastructure, and project structure that all subsequent Phase 1 tasks depend on. Locked decisions (SQLModel, SQLite, uv) are implemented here. Wave 0 test fixtures ensure all verification commands can run.
 
-Output: Working Python project with models, database initialization, and app structure ready for API routes in Plan 02.
+Output: Working Python project with models, database initialization, test fixtures, and app structure ready for API routes in Plan 02.
 </objective>
 
 <execution_context>
@@ -79,6 +98,7 @@ Locked Decisions:
 - Tooling: uv for package management
 - Framework: FastAPI
 - Project structure: src/app/ layout with separate models.py, db.py, main.py
+- Testing: pytest + pytest-asyncio, conftest with in-memory SQLite fixture
 
 Reference Model Definitions:
 From 01-CONTEXT.md — these are the exact fields required:
@@ -97,9 +117,9 @@ Job model:
 - salary_min: int | None
 - salary_max: int | None
 - required_experience_years: int | None
-- target_industries: list[str] (JSON column)
-- target_company_types: list[str] (JSON column)
-- status: JobStatus (enum: hunting, shortlisting, interviewing, closed)
+- target_industries: list[str] (JSON column) — JOB-02
+- target_company_types: list[str] (JSON column) — JOB-02
+- status: JobStatus (enum: hunting, shortlisting, interviewing, closed) — JOB-03
 - created_at: datetime (default utcnow)
 - updated_at: datetime (default utcnow)
 
@@ -107,6 +127,140 @@ JobStatus enum values: hunting, shortlisting, interviewing, closed
 </context>
 
 <tasks>
+
+<task type="auto">
+  <name>Task 0 (Wave 0): Create test infrastructure with pytest fixtures and conftest</name>
+  <files>
+    tests/__init__.py
+    tests/conftest.py
+    tests/test_models.py
+    tests/test_routes.py
+    pyproject.toml
+  </files>
+  <read_first>
+    - /Users/juanjavierdonoso/Ai Agency/projects/hr-recruitment-ai/pyproject.toml (to add pytest configuration)
+  </read_first>
+  <action>
+1. Create tests/ directory structure:
+   - Create tests/__init__.py (empty)
+   - Create tests/conftest.py with pytest fixtures for database testing
+   - Create tests/test_models.py with stubs
+   - Create tests/test_routes.py with stubs
+
+2. Write tests/conftest.py with in-memory SQLite fixture for testing:
+```python
+import pytest
+from sqlmodel import SQLModel, create_engine, Session
+from sqlalchemy.pool import StaticPool
+
+@pytest.fixture(name="db_session")
+def db_session_fixture():
+    """Create in-memory SQLite database session for testing.
+
+    Each test gets a fresh database (StaticPool for single conn).
+    """
+    # Import models to register them with SQLModel.metadata
+    from src.app.models import Client, Job, JobStatus
+
+    # Create in-memory SQLite engine
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+
+    # Create all tables
+    SQLModel.metadata.create_all(engine)
+
+    # Yield session for test
+    with Session(engine) as session:
+        yield session
+
+@pytest.fixture
+def client_data():
+    """Sample client data for tests"""
+    return {
+        "name": "Test Client LLC"
+    }
+
+@pytest.fixture
+def job_data(client_data):
+    """Sample job data for tests"""
+    return {
+        "client_id": 1,
+        "title": "Senior Python Engineer",
+        "description": "Build scalable systems with Python and FastAPI",
+        "seniority": "Senior",
+        "salary_min": 150000,
+        "salary_max": 200000,
+        "required_experience_years": 5,
+        "target_industries": ["Technology", "Finance"],
+        "target_company_types": ["Startup", "Tech Company"],
+    }
+```
+
+3. Create tests/test_models.py (stubs):
+```python
+"""Tests for SQLModel data models (Client, Job)"""
+
+def test_client_model_stub():
+    """Placeholder for client model tests - implemented in later task"""
+    pass
+
+def test_job_model_stub():
+    """Placeholder for job model tests - implemented in later task"""
+    pass
+```
+
+4. Create tests/test_routes.py (stubs):
+```python
+"""Tests for FastAPI routes (jobs, clients)"""
+
+def test_job_routes_stub():
+    """Placeholder for job route tests - implemented in Plan 02"""
+    pass
+
+def test_client_routes_stub():
+    """Placeholder for client route tests - implemented in Plan 02"""
+    pass
+```
+
+5. Update pyproject.toml to add pytest configuration:
+   - Add under [tool.pytest.ini_options]:
+     ```toml
+     [tool.pytest.ini_options]
+     testpaths = ["tests"]
+     python_files = ["test_*.py"]
+     python_classes = ["Test*"]
+     python_functions = ["test_*"]
+     asyncio_mode = "auto"
+     ```
+   - Verify pytest-asyncio is in dev dependencies
+
+6. Create tests/__init__.py (empty file for Python package recognition)
+  </action>
+  <verify>
+    <automated>
+      test -f /Users/juanjavierdonoso/Ai\ Agency/projects/hr-recruitment-ai/tests/__init__.py && \
+      test -f /Users/juanjavierdonoso/Ai\ Agency/projects/hr-recruitment-ai/tests/conftest.py && \
+      grep -q "@pytest.fixture" /Users/juanjavierdonoso/Ai\ Agency/projects/hr-recruitment-ai/tests/conftest.py && \
+      grep -q "sqlite:///:memory:" /Users/juanjavierdonoso/Ai\ Agency/projects/hr-recruitment-ai/tests/conftest.py && \
+      test -f /Users/juanjavierdonoso/Ai\ Agency/projects/hr-recruitment-ai/tests/test_models.py && \
+      test -f /Users/juanjavierdonoso/Ai\ Agency/projects/hr-recruitment-ai/tests/test_routes.py && \
+      grep -q "asyncio_mode = \"auto\"" /Users/juanjavierdonoso/Ai\ Agency/projects/hr-recruitment-ai/pyproject.toml && \
+      cd /Users/juanjavierdonoso/Ai\ Agency/projects/hr-recruitment-ai && uv run pytest tests/ --collect-only 2>&1 | grep -q "test_" && \
+      echo "PASS" || echo "FAIL"
+    </automated>
+  </verify>
+  <done>
+    - tests/ directory created with __init__.py, conftest.py, test_models.py, test_routes.py
+    - conftest.py has pytest fixture for in-memory SQLite database
+    - conftest.py has fixtures for sample client_data and job_data
+    - test_models.py and test_routes.py have stub test functions
+    - pyproject.toml includes [tool.pytest.ini_options] with asyncio_mode = "auto"
+    - pytest can collect tests: `uv run pytest tests/ --collect-only` runs without error
+  </done>
+</task>
 
 <task type="auto">
   <name>Task 1: Initialize FastAPI project with uv and create project structure</name>
@@ -528,16 +682,20 @@ Key implementation details:
 After Plan 01 execution:
 
 1. **Project structure:** Verify directory tree shows src/app/{__init__.py, main.py, db.py, models.py}
-2. **pyproject.toml:** All locked-decision dependencies present (fastapi, sqlmodel, uvicorn, pytest)
-3. **Models defined:** Client and Job models in models.py with all fields from 01-CONTEXT.md
-4. **Database ready:** create_db_tables() function exists and is wired into FastAPI lifespan
-5. **App startable:** `uv run uvicorn src.app.main:app --reload` should start without errors
-6. **No runtime errors:** All imports work, models can be instantiated, database file is created on startup
+2. **Test infrastructure:** Verify tests/{__init__.py, conftest.py, test_models.py, test_routes.py} exist
+3. **pyproject.toml:** All locked-decision dependencies present (fastapi, sqlmodel, uvicorn, pytest, pytest-asyncio)
+4. **pytest configuration:** [tool.pytest.ini_options] with asyncio_mode = "auto"
+5. **Models defined:** Client and Job models in models.py with all fields from 01-CONTEXT.md, JobStatus enum
+6. **Database ready:** create_db_tables() function exists and is wired into FastAPI lifespan
+7. **App startable:** `uv run uvicorn src.app.main:app --reload` should start without errors
+8. **Tests runnable:** `uv run pytest tests/ --collect-only` collects test stubs; fixtures available
+9. **No runtime errors:** All imports work, models can be instantiated, database file is created on startup
 </verification>
 
 <success_criteria>
-- [ ] All files created: pyproject.toml, src/app/{main.py, db.py, models.py, __init__.py}, .env.example, .gitignore
+- [ ] All files created: pyproject.toml, src/app/{main.py, db.py, models.py, __init__.py}, tests/{__init__.py, conftest.py, test_models.py, test_routes.py}, .env.example, .gitignore
 - [ ] pyproject.toml has fastapi>=0.111.0, sqlmodel>=0.0.37, uvicorn[standard], pytest, pytest-asyncio
+- [ ] pytest configuration in pyproject.toml with [tool.pytest.ini_options] asyncio_mode = "auto"
 - [ ] Client model with id, name, created_at
 - [ ] Job model with all JOB-01 fields (title, description, seniority, salary_min, salary_max, required_experience_years, client_id)
 - [ ] Job model with JOB-02 JSON columns (target_industries, target_company_types)
@@ -546,11 +704,16 @@ After Plan 01 execution:
 - [ ] create_db_tables() wired into FastAPI lifespan event
 - [ ] get_session() dependency available for routes
 - [ ] App imports without errors and health check endpoint responds
+- [ ] conftest.py has db_session fixture for in-memory SQLite testing
+- [ ] test_models.py and test_routes.py have stub functions
+- [ ] pytest can collect tests: `uv run pytest tests/ --collect-only` runs without error
 - [ ] No blocking errors when running app startup
 
 Requirement coverage:
 - JOB-01: Job model has title, description, seniority, salary fields ✓
 - JOB-02: Job model has target_industries and target_company_types JSON columns ✓
+- JOB-03: Job model has status field (JobStatus enum: hunting, shortlisting, interviewing, closed) ✓
+- JOB-04: Status tracking field exists for archive functionality ✓
 </success_criteria>
 
 <output>

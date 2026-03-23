@@ -16,8 +16,8 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 
 ## Last Action
 
-Project initialized on 2026-03-23. Ready to begin Phase 1.
+2026-03-23: Phase 1 discuss-phase complete. 01-CONTEXT.md written with all design decisions (SQLModel + SQLite, Client table, JSON list columns for JOB-02, HTMX + Jinja2 frontend, uv tooling, no Docker in v1).
 
 ## Next Step
 
-Run `/gsd:plan-phase 1` to plan Phase 1 — Foundation.
+Run `/gsd:plan-phase 1` to generate execution plans for Phase 1.
