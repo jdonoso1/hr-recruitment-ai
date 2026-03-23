@@ -12,11 +12,14 @@
 
 **Plans:** 2 plans in 2 waves
 
-### Plan 01 — Project scaffold & SQLModel data models
-- Python project structure with uv (FastAPI + SQLite)
-- SQLModel data models for Client and Job with all JOB-01 and JOB-02 fields
-- Database layer with SQLAlchemy engine and session management
-- Database initialization via FastAPI lifespan event
+### Plan 01 — Project scaffold & SQLModel data models ✓ COMPLETE
+- ✅ Python project structure with uv (FastAPI + SQLite)
+- ✅ SQLModel data models for Client and Job with all JOB-01, JOB-02, JOB-03, JOB-04 fields
+- ✅ Database layer with SQLAlchemy engine and session management
+- ✅ Database initialization via FastAPI lifespan event
+- ✅ Test infrastructure with pytest fixtures and conftest
+- ✅ 6 tasks, 11 files created, 6 commits
+- ✅ Summary: .planning/phases/01-foundation-job-project-setup/01-PLAN-SUMMARY.md
 
 ### Plan 02 — Job management API routes and UI
 - FastAPI routes for job CRUD (create, list, detail, archive)
