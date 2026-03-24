@@ -35,6 +35,7 @@ app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
 app.include_router(jobs.router)
 app.include_router(clients.router)
 app.include_router(hunting.router)
+app.include_router(hunting.hunting_router)
 
 # Add CORS middleware (for later frontend integration if needed)
 app.add_middleware(

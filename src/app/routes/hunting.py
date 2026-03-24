@@ -26,6 +26,7 @@ from ..agents.company_mapper import CompanyMapperAgent, CompanyMapperRequest
 from ..agents.role_identifier import RoleIdentifierAgent, RoleIdentifierRequest
 
 router = APIRouter(prefix="/jobs", tags=["hunting"])
+hunting_router = APIRouter(prefix="/hunting", tags=["hunting"])
 
 # Template setup
 templates_dir = Path(__file__).parent.parent.parent.parent / "templates"
@@ -263,6 +264,7 @@ def get_hunting_companies(
         ).all()
 
     return templates.TemplateResponse(request, "jobs/hunting-companies-fragment.html", {
+        "job": job,
         "companies": companies,
         "hunting_session": hunting_session,
     })
@@ -289,12 +291,13 @@ def get_hunting_candidates(
         ).all()
 
     return templates.TemplateResponse(request, "jobs/hunting-candidates-fragment.html", {
+        "job": job,
         "candidates": candidates,
         "hunting_session": hunting_session,
     })
 
 
-@router.post("/{session_id}/candidates/{candidate_id}/approve")
+@hunting_router.post("/{session_id}/candidates/{candidate_id}/approve")
 def approve_candidate(
     session_id: int,
     candidate_id: int,
@@ -316,7 +319,7 @@ def approve_candidate(
     return ""
 
 
-@router.post("/{session_id}/candidates/{candidate_id}/reject")
+@hunting_router.post("/{session_id}/candidates/{candidate_id}/reject")
 def reject_candidate(
     session_id: int,
     candidate_id: int,
@@ -338,7 +341,7 @@ def reject_candidate(
     return ""
 
 
-@router.post("/{session_id}/companies/{company_id}/remove")
+@hunting_router.post("/{session_id}/companies/{company_id}/remove")
 def remove_company(
     session_id: int,
     company_id: int,
