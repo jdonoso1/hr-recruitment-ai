@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}{% if job %}Edit Job{% else %}Create Job{% endif %} — HR Recruitment AI{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h2 class="text-4xl font-bold">{% if job %}Edit Job: {{ job.title }}{% else %}Create Job{% endif %}</h2>
+    <p class="text-gray-600 mt-2">Define the job position, target industries, and company types for AI-driven candidate hunting</p>
+</div>
+
+<div class="bg-white border border-gray-200 rounded-lg p-8 max-w-2xl">
+    <form method="POST" hx-post="{% if job %}/jobs/{{ job.id }}{% else %}/jobs{% endif %}" hx-target="body" hx-boost="true">
+
+        <!-- Client selection (required) -->
+        <div class="mb-6">
+            <label for="client_id" class="block text-sm font-medium text-gray-700 mb-2">Client *</label>
+            <select id="client_id" name="client_id" class="form-input" required>
+                <option value="">Select a client...</option>
+                {% for client in clients %}
+                <option value="{{ client.id }}" {% if job and job.client_id == client.id %}selected{% endif %}>
+                    {{ client.name }}
+                </option>
+                {% endfor %}
+            </select>
+            {% if errors and 'client_id' in errors %}<p class="form-error">{{ errors['client_id'] }}</p>{% endif %}
+        </div>
+
+        <!-- Job title (required) -->
+        <div class="mb-6">
+            <label for="title" class="block text-sm font-medium text-gray-700 mb-2">Job Title *</label>
+            <input type="text" id="title" name="title" class="form-input" placeholder="e.g., Senior Software Engineer" value="{{ job.title if job else '' }}" required>
+            {% if errors and 'title' in errors %}<p class="form-error">{{ errors['title'] }}</p>{% endif %}
+        </div>
+
+        <!-- Description (required) -->
+        <div class="mb-6">
+            <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Job Description *</label>
+            <textarea id="description" name="description" class="form-input" placeholder="Describe the role, responsibilities, and qualifications" rows="6" required>{{ job.description if job else '' }}</textarea>
+            {% if errors and 'description' in errors %}<p class="form-error">{{ errors['description'] }}</p>{% endif %}
+        </div>
+
+        <!-- Seniority (required) -->
+        <div class="mb-6">
+            <label for="seniority" class="block text-sm font-medium text-gray-700 mb-2">Seniority Level *</label>
+            <select id="seniority" name="seniority" class="form-input" required>
+                <option value="">Select seniority...</option>
+                <option value="Junior" {% if job and job.seniority == 'Junior' %}selected{% endif %}>Junior</option>
+                <option value="Mid-Level" {% if job and job.seniority == 'Mid-Level' %}selected{% endif %}>Mid-Level</option>
+                <option value="Senior" {% if job and job.seniority == 'Senior' %}selected{% endif %}>Senior</option>
+                <option value="Lead" {% if job and job.seniority == 'Lead' %}selected{% endif %}>Lead</option>
+                <option value="Manager" {% if job and job.seniority == 'Manager' %}selected{% endif %}>Manager</option>
+                <option value="Director" {% if job and job.seniority == 'Director' %}selected{% endif %}>Director</option>
+            </select>
+            {% if errors and 'seniority' in errors %}<p class="form-error">{{ errors['seniority'] }}</p>{% endif %}
+        </div>
+
+        <!-- Salary range (optional) -->
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div>
+                <label for="salary_min" class="block text-sm font-medium text-gray-700 mb-2">Min Salary (USD)</label>
+                <input type="number" id="salary_min" name="salary_min" class="form-input" placeholder="e.g., 100000" value="{{ job.salary_min if job else '' }}">
+                {% if errors and 'salary_min' in errors %}<p class="form-error">{{ errors['salary_min'] }}</p>{% endif %}
+            </div>
+            <div>
+                <label for="salary_max" class="block text-sm font-medium text-gray-700 mb-2">Max Salary (USD)</label>
+                <input type="number" id="salary_max" name="salary_max" class="form-input" placeholder="e.g., 150000" value="{{ job.salary_max if job else '' }}">
+                {% if errors and 'salary_max' in errors %}<p class="form-error">{{ errors['salary_max'] }}</p>{% endif %}
+            </div>
+        </div>
+
+        <!-- Required experience (optional) -->
+        <div class="mb-6">
+            <label for="required_experience_years" class="block text-sm font-medium text-gray-700 mb-2">Required Experience (years)</label>
+            <input type="number" id="required_experience_years" name="required_experience_years" class="form-input" placeholder="e.g., 5" value="{{ job.required_experience_years if job else '' }}">
+            {% if errors and 'required_experience_years' in errors %}<p class="form-error">{{ errors['required_experience_years'] }}</p>{% endif %}
+        </div>
+
+        <!-- Target industries (optional, JSON array) -->
+        <div class="mb-6">
+            <label for="target_industries" class="block text-sm font-medium text-gray-700 mb-2">Target Industries</label>
+            <input type="text" id="target_industries" name="target_industries" class="form-input" placeholder="e.g., Tech, FinTech, Healthcare (comma-separated)" value="{% if job %}{{ job.target_industries|join(', ') }}{% endif %}">
+            <p class="text-xs text-gray-500 mt-1">Enter industries separated by commas</p>
+            {% if errors and 'target_industries' in errors %}<p class="form-error">{{ errors['target_industries'] }}</p>{% endif %}
+        </div>
+
+        <!-- Target company types (optional, JSON array) -->
+        <div class="mb-6">
+            <label for="target_company_types" class="block text-sm font-medium text-gray-700 mb-2">Target Company Types</label>
+            <input type="text" id="target_company_types" name="target_company_types" class="form-input" placeholder="e.g., Startup, Scale-up, Enterprise (comma-separated)" value="{% if job %}{{ job.target_company_types|join(', ') }}{% endif %}">
+            <p class="text-xs text-gray-500 mt-1">Enter company types separated by commas</p>
+            {% if errors and 'target_company_types' in errors %}<p class="form-error">{{ errors['target_company_types'] }}</p>{% endif %}
+        </div>
+
+        <!-- Form actions -->
+        <div class="flex gap-4 pt-6 border-t border-gray-200">
+            <button type="submit" class="btn-primary flex-1">
+                {% if job %}Update Job{% else %}Create Job{% endif %}
+            </button>
+            <a href="/jobs" class="btn-secondary flex-1 text-center">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Convert comma-separated strings to JSON arrays before form submission
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const targetIndustries = document.getElementById('target_industries').value;
+        const targetCompanyTypes = document.getElementById('target_company_types').value;
+
+        // Convert to arrays
+        document.getElementById('target_industries').value = targetIndustries ? JSON.stringify(targetIndustries.split(',').map(s => s.trim())) : JSON.stringify([]);
+        document.getElementById('target_company_types').value = targetCompanyTypes ? JSON.stringify(targetCompanyTypes.split(',').map(s => s.trim())) : JSON.stringify([]);
+    });
+</script>
+{% endblock %}
