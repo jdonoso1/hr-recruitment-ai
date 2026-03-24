@@ -1,0 +1,38 @@
+{% if companies %}
+    {% for company in companies %}
+    <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+        <div class="flex items-start justify-between mb-3">
+            <div>
+                <h4 class="font-semibold text-gray-900">{{ company.name }}</h4>
+                <p class="text-sm text-gray-600">{{ company.industry }}</p>
+            </div>
+            <button hx-post="/jobs/{{ job.id }}/hunting/companies/{{ company.id }}/remove"
+                    hx-target="closest div"
+                    hx-swap="outerHTML swap:1s"
+                    class="text-gray-400 hover:text-red-600 transition"
+                    title="Remove company">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        </div>
+        <p class="text-sm text-gray-600 mb-3">{{ company.size_description }}</p>
+        {% if company.linkedin_url %}
+        <a href="{{ company.linkedin_url }}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1">
+            View on LinkedIn
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M11 3a1 1 0 100 2h3.293L9.646 9.646a1 1 0 101.414 1.414L15.586 6h-3.293a1 1 0 100-2h5a1 1 0 011 1v5a1 1 0 11-2 0V4a1 1 0 00-1-1h-5z" />
+            </svg>
+        </a>
+        {% endif %}
+    </div>
+    {% endfor %}
+{% else %}
+<div class="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center text-gray-600">
+    {% if hunting_session and (hunting_session.status == 'pending' or hunting_session.status == 'in_progress') %}
+        <p>🔍 AI is mapping target companies...</p>
+    {% else %}
+        <p>No companies identified yet.</p>
+    {% endif %}
+</div>
+{% endif %}

@@ -1,0 +1,57 @@
+{% if candidates %}
+    {% for candidate in candidates %}
+    <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+        <div class="flex items-start justify-between mb-3">
+            <div>
+                <h4 class="font-semibold text-gray-900">{{ candidate.name }}</h4>
+                <p class="text-sm text-gray-600">{{ candidate.current_title }} at {{ candidate.current_company }}</p>
+            </div>
+            <span class="badge-{{ candidate.status }} px-3 py-1 rounded-full text-xs font-medium">
+                {{ candidate.status.replace('_', ' ').title() }}
+            </span>
+        </div>
+
+        {% if candidate.linkedin_url %}
+        <a href="{{ candidate.linkedin_url }}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-700 text-sm font-medium mb-3 flex items-center gap-1">
+            LinkedIn Profile
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M11 3a1 1 0 100 2h3.293L9.646 9.646a1 1 0 101.414 1.414L15.586 6h-3.293a1 1 0 100-2h5a1 1 0 011 1v5a1 1 0 11-2 0V4a1 1 0 00-1-1h-5z" />
+            </svg>
+        </a>
+        {% endif %}
+
+        {% if candidate.email %}
+        <p class="text-sm text-gray-700 mb-3">
+            <span class="text-gray-600">Email:</span> {{ candidate.email }}
+        </p>
+        {% else %}
+        <p class="text-sm text-gray-500 mb-3">Email not available</p>
+        {% endif %}
+
+        {% if candidate.status == 'hunting' %}
+        <div class="flex gap-2">
+            <button hx-post="/hunting/{{ hunting_session.id }}/candidates/{{ candidate.id }}/approve"
+                    hx-target="closest div"
+                    hx-swap="outerHTML swap:1s"
+                    class="btn-primary text-sm flex-1">
+                Approve
+            </button>
+            <button hx-post="/hunting/{{ hunting_session.id }}/candidates/{{ candidate.id }}/reject"
+                    hx-target="closest div"
+                    hx-swap="outerHTML swap:1s"
+                    class="btn-secondary text-sm flex-1">
+                Skip
+            </button>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+{% else %}
+<div class="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center text-gray-600">
+    {% if hunting_session and (hunting_session.status == 'pending' or hunting_session.status == 'in_progress') %}
+        <p>🔍 AI is searching for candidates...</p>
+    {% else %}
+        <p>No candidates found yet.</p>
+    {% endif %}
+</div>
+{% endif %}

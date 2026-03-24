@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}Hunting: {{ job.title }} — HR Recruitment AI{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-4xl font-bold">Hunting for {{ job.title }}</h2>
+        <span class="badge-hunting px-4 py-2 rounded-lg text-sm font-medium">
+            {% if hunting_session %}
+                {{ hunting_session.status.replace('_', ' ').title() }}
+            {% else %}
+                No Session
+            {% endif %}
+        </span>
+    </div>
+    <a href="/jobs/{{ job.id }}" class="text-blue-600 hover:text-blue-700 text-sm">← Back to Job Detail</a>
+</div>
+
+{% if not hunting_session %}
+<div class="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center mb-8">
+    <p class="text-blue-900 font-semibold mb-4">No hunting session started yet.</p>
+    <a href="/jobs/{{ job.id }}/hunting/start" class="btn-primary">Start Hunting Now</a>
+</div>
+{% else %}
+
+<!-- Companies Section -->
+<div class="mb-12">
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-2xl font-semibold text-gray-900">
+            Target Companies
+            {% if companies %}
+                <span class="text-lg text-gray-600 font-normal">({{ companies|length }} identified)</span>
+            {% endif %}
+        </h3>
+    </div>
+
+    <div id="companies-container">
+        {% if companies %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for company in companies %}
+                <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <h4 class="font-semibold text-gray-900">{{ company.name }}</h4>
+                            <p class="text-sm text-gray-600">{{ company.industry }}</p>
+                        </div>
+                        <button hx-post="/jobs/{{ job.id }}/hunting/companies/{{ company.id }}/remove"
+                                hx-target="closest div"
+                                hx-swap="outerHTML swap:1s"
+                                class="text-gray-400 hover:text-red-600 transition"
+                                title="Remove company">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-3">{{ company.size_description }}</p>
+                    {% if company.linkedin_url %}
+                    <a href="{{ company.linkedin_url }}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1">
+                        View on LinkedIn
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M11 3a1 1 0 100 2h3.293L9.646 9.646a1 1 0 101.414 1.414L15.586 6h-3.293a1 1 0 100-2h5a1 1 0 011 1v5a1 1 0 11-2 0V4a1 1 0 00-1-1h-5z" />
+                        </svg>
+                    </a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center text-gray-600">
+                {% if hunting_session.status == 'pending' or hunting_session.status == 'in_progress' %}
+                    <p>🔍 AI is mapping target companies...</p>
+                    <p class="text-sm mt-2">This usually takes 30-60 seconds. Refresh to see progress.</p>
+                {% else %}
+                    <p>No companies identified yet.</p>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Candidates Section -->
+<div class="mb-12">
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-2xl font-semibold text-gray-900">
+            Candidates
+            {% if candidates %}
+                <span class="text-lg text-gray-600 font-normal">({{ candidates|length }} found)</span>
+            {% endif %}
+        </h3>
+    </div>
+
+    <div id="candidates-container">
+        {% if candidates %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for candidate in candidates %}
+                <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <h4 class="font-semibold text-gray-900">{{ candidate.name }}</h4>
+                            <p class="text-sm text-gray-600">{{ candidate.current_title }} at {{ candidate.current_company }}</p>
+                        </div>
+                        <span class="badge-{{ candidate.status }} px-3 py-1 rounded-full text-xs font-medium">
+                            {{ candidate.status.replace('_', ' ').title() }}
+                        </span>
+                    </div>
+
+                    {% if candidate.linkedin_url %}
+                    <a href="{{ candidate.linkedin_url }}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-700 text-sm font-medium mb-3 flex items-center gap-1">
+                        LinkedIn Profile
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M11 3a1 1 0 100 2h3.293L9.646 9.646a1 1 0 101.414 1.414L15.586 6h-3.293a1 1 0 100-2h5a1 1 0 011 1v5a1 1 0 11-2 0V4a1 1 0 00-1-1h-5z" />
+                        </svg>
+                    </a>
+                    {% endif %}
+
+                    {% if candidate.email %}
+                    <p class="text-sm text-gray-700 mb-3">
+                        <span class="text-gray-600">Email:</span> {{ candidate.email }}
+                    </p>
+                    {% else %}
+                    <p class="text-sm text-gray-500 mb-3">Email not available</p>
+                    {% endif %}
+
+                    {% if candidate.status == 'hunting' %}
+                    <div class="flex gap-2">
+                        <button hx-post="/hunting/{{ hunting_session.id }}/candidates/{{ candidate.id }}/approve"
+                                hx-target="closest div"
+                                hx-swap="outerHTML swap:1s"
+                                class="btn-primary text-sm flex-1">
+                            Approve
+                        </button>
+                        <button hx-post="/hunting/{{ hunting_session.id }}/candidates/{{ candidate.id }}/reject"
+                                hx-target="closest div"
+                                hx-swap="outerHTML swap:1s"
+                                class="btn-secondary text-sm flex-1">
+                            Skip
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center text-gray-600">
+                {% if hunting_session.status == 'pending' or hunting_session.status == 'in_progress' %}
+                    <p>🔍 AI is searching for candidates...</p>
+                    <p class="text-sm mt-2">This usually takes 1-2 minutes. Refresh to see progress.</p>
+                {% else %}
+                    <p>No candidates found yet.</p>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Status Info -->
+<div class="bg-gray-50 border border-gray-200 rounded-lg p-6">
+    <h4 class="font-semibold text-gray-900 mb-3">Hunting Session Details</h4>
+    <div class="grid grid-cols-2 gap-4 text-sm">
+        <div>
+            <p class="text-gray-600">Status</p>
+            <p class="font-semibold">{{ hunting_session.status.replace('_', ' ').title() }}</p>
+        </div>
+        <div>
+            <p class="text-gray-600">Started</p>
+            <p class="font-semibold">
+                {% if hunting_session.started_at %}
+                    {{ hunting_session.started_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                {% else %}
+                    Pending
+                {% endif %}
+            </p>
+        </div>
+        <div>
+            <p class="text-gray-600">Completed</p>
+            <p class="font-semibold">
+                {% if hunting_session.completed_at %}
+                    {{ hunting_session.completed_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                {% else %}
+                    In Progress
+                {% endif %}
+            </p>
+        </div>
+        <div>
+            <p class="text-gray-600">Created</p>
+            <p class="font-semibold">{{ hunting_session.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+        </div>
+    </div>
+</div>
+
+{% endif %}
+{% endblock %}

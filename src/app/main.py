@@ -1,12 +1,13 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
 # Import database and models to ensure SQLModel metadata is loaded
 from .db import create_db_tables
 from .models import Client, Job, JobStatus  # Import to ensure models are registered
-from .routes import jobs, clients
+from .routes import jobs, clients, hunting
 
 # Lifespan event to create database tables on startup
 @asynccontextmanager
@@ -26,9 +27,14 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Serve static files (CSS, JS)
+_static_dir = Path(__file__).parent.parent.parent / "static"
+app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
+
 # Include API routers
 app.include_router(jobs.router)
 app.include_router(clients.router)
+app.include_router(hunting.router)
 
 # Add CORS middleware (for later frontend integration if needed)
 app.add_middleware(

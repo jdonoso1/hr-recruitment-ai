@@ -95,6 +95,10 @@
         <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 sticky top-24">
             <h3 class="font-semibold text-gray-900 mb-4">Actions</h3>
 
+            <a href="/jobs/{{ job.id }}/hunting" class="btn-primary w-full text-center mb-3">
+                Start Hunting
+            </a>
+
             <a href="/jobs/{{ job.id }}/edit" class="btn-secondary w-full text-center mb-3">Edit Job</a>
 
             <button hx-post="/jobs/{{ job.id }}/archive" hx-target="body" class="btn-destructive w-full" onclick="return confirm('Archive this job? You can reopen it anytime.')">
