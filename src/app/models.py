@@ -74,6 +74,8 @@ class Job(SQLModel, table=True):
 
 class HuntingSession(SQLModel, table=True):
     """Represents a candidate hunting run for a specific job"""
+    __tablename__ = "hunting_session"
+
     id: Optional[int] = Field(default=None, primary_key=True)
     job_id: int = Field(foreign_key="job.id", index=True)
     status: HuntingStatus = Field(default=HuntingStatus.pending, index=True)
@@ -85,6 +87,8 @@ class HuntingSession(SQLModel, table=True):
 
 class TargetCompany(SQLModel, table=True):
     """Target companies identified by AI for hunting"""
+    __tablename__ = "target_company"
+
     id: Optional[int] = Field(default=None, primary_key=True)
     hunting_session_id: int = Field(foreign_key="hunting_session.id", index=True)
     name: str = Field(index=True)
@@ -96,6 +100,8 @@ class TargetCompany(SQLModel, table=True):
 
 class Candidate(SQLModel, table=True):
     """Candidate discovered at a target company"""
+    __tablename__ = "candidate"
+
     id: Optional[int] = Field(default=None, primary_key=True)
     hunting_session_id: int = Field(foreign_key="hunting_session.id", index=True)
     target_company_id: int = Field(foreign_key="target_company.id", index=True)
@@ -111,6 +117,8 @@ class Candidate(SQLModel, table=True):
 
 class OutreachDraft(SQLModel, table=True):
     """AI-drafted outreach messages per candidate"""
+    __tablename__ = "outreach_draft"
+
     id: Optional[int] = Field(default=None, primary_key=True)
     candidate_id: int = Field(foreign_key="candidate.id", index=True)
     job_id: int = Field(foreign_key="job.id", index=True)
