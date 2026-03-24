@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Jobs — HR Recruitment AI{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <div class="flex items-center justify-between mb-2">
+        <h2 class="text-4xl font-bold">Jobs</h2>
+        <a href="/jobs/create" class="btn-primary">+ Create Job</a>
+    </div>
+    <p class="text-gray-600">Manage your active and closed jobs</p>
+</div>
+
+{% if jobs %}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    {% for job in jobs %}
+    <div id="job-row-{{ job.id }}" class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="window.location.href='/jobs/{{ job.id }}'">
+        <!-- Job card header with title and status -->
+        <div class="flex items-start justify-between mb-4">
+            <div class="flex-1">
+                <h3 class="text-xl font-semibold text-gray-900">{{ job.title }}</h3>
+                <p class="text-sm text-gray-600 mt-1">Client: {{ job.client_id }}</p>
+            </div>
+            <span class="badge-{{ job.status }} px-3 py-1 rounded text-sm font-medium">
+                {{ job.status.replace('_', ' ').title() }}
+            </span>
+        </div>
+
+        <!-- Job description (truncated) -->
+        <p class="text-gray-700 text-sm mb-4 line-clamp-2">{{ job.description }}</p>
+
+        <!-- Job metadata -->
+        <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
+            <div>
+                <span class="text-gray-600">Seniority:</span>
+                <span class="font-medium">{{ job.seniority }}</span>
+            </div>
+            {% if job.salary_min or job.salary_max %}
+            <div>
+                <span class="text-gray-600">Salary:</span>
+                <span class="font-medium">
+                    {% if job.salary_min and job.salary_max %}
+                        ${{ job.salary_min }}—${{ job.salary_max }}
+                    {% elif job.salary_min %}
+                        ${{ job.salary_min }}+
+                    {% else %}
+                        ${{ job.salary_max }}
+                    {% endif %}
+                </span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Target industries/company types -->
+        {% if job.target_industries or job.target_company_types %}
+        <div class="mb-4">
+            {% if job.target_industries %}
+            <p class="text-xs text-gray-600 mb-2">
+                <strong>Industries:</strong> {{ job.target_industries|join(', ') }}
+            </p>
+            {% endif %}
+            {% if job.target_company_types %}
+            <p class="text-xs text-gray-600">
+                <strong>Company Types:</strong> {{ job.target_company_types|join(', ') }}
+            </p>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Card actions (stop click propagation) -->
+        <div class="flex gap-2 mt-4 pt-4 border-t border-gray-200" onclick="event.stopPropagation()">
+            <a href="/jobs/{{ job.id }}/edit" class="btn-secondary text-sm flex-1 text-center">Edit</a>
+            <button hx-post="/jobs/{{ job.id }}/archive" hx-target="#job-row-{{ job.id }}" hx-swap="outerHTML" onclick="return confirm('Archive this job?')" class="btn-destructive text-sm flex-1">Archive</button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<!-- Empty state per 01-UI-SPEC.md -->
+<div class="flex flex-col items-center justify-center py-12 text-center">
+    <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+    <h3 class="text-2xl font-semibold text-gray-900 mb-2">No jobs yet</h3>
+    <p class="text-gray-600 mb-6 max-w-md">
+        Start by creating your first job. Set the title, seniority, salary range, and target industries. Then click Create to save.
+    </p>
+    <a href="/jobs/create" class="btn-primary">Create Your First Job</a>
+</div>
+{% endif %}
+{% endblock %}
