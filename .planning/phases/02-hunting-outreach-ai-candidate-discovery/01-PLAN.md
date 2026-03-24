@@ -1,0 +1,276 @@
+---
+phase: 02-hunting-outreach-ai-candidate-discovery
+plan: 01
+type: execute
+wave: 1
+depends_on: []
+files_modified:
+  - src/app/models.py
+  - src/app/agents/__init__.py
+  - src/app/agents/base.py
+  - src/app/agents/company_mapper.py
+  - tests/test_agents.py
+  - pyproject.toml
+autonomous: true
+requirements: [HUNT-01, HUNT-02]
+user_setup: []
+
+must_haves:
+  truths:
+    - "HuntingSession records can be created and queried from the database"
+    - "TargetCompany records can be created and associated with a HuntingSession"
+    - "Anthropic SDK claude-haiku-4-5 can be invoked to generate structured company lists"
+    - "Agent base class provides async function-call interface pattern for all future agents"
+    - "Agent responses are validated and stored as Pydantic models before database persistence"
+  artifacts:
+    - path: "src/app/models.py"
+      provides: "HuntingSession, TargetCompany, Candidate, OutreachDraft data models with all HUNT/OUTR status enums"
+      exports: ["HuntingSession", "TargetCompany", "Candidate", "OutreachDraft", "CandidateStatus", "OutreachStatus", "HuntingStatus"]
+      min_lines: 150
+    - path: "src/app/agents/__init__.py"
+      provides: "Agent module exports"
+      exports: ["CompanyMapperAgent"]
+      min_lines: 5
+    - path: "src/app/agents/base.py"
+      provides: "BaseAgent abstract class with async function-call pattern and Anthropic SDK integration"
+      exports: ["BaseAgent", "AgentResponse"]
+      min_lines: 80
+    - path: "src/app/agents/company_mapper.py"
+      provides: "CompanyMapperAgent that takes job context and generates target companies via Claude API"
+      exports: ["CompanyMapperAgent", "CompanyMapperRequest", "CompanyMapperResponse"]
+      min_lines: 120
+    - path: "tests/test_agents.py"
+      provides: "Integration tests for agent infrastructure and company mapper"
+      min_lines: 100
+  key_links:
+    - from: "src/app/models.py"
+      to: "src/app/agents/base.py"
+      via: "Pydantic models passed to agent.run() and stored from agent.response"
+      pattern: "Candidate|TargetCompany.*=.*Agent"
+    - from: "src/app/agents/company_mapper.py"
+      to: "src/app/models.py"
+      via: "Agent generates CompanyMapperResponse → stored as TargetCompany records"
+      pattern: "CompanyMapperResponse.*TargetCompany"
+    - from: "src/app/agents/base.py"
+      to: "Anthropic SDK"
+      via: "Async function calls to Claude API with tool_use"
+      pattern: "anthropic.*AsyncClient.*tool_use"
+
+---
+
+<objective>
+Establish the data models and agent infrastructure for Phase 2 candidate hunting. This plan creates: (1) database models for HuntingSession, TargetCompany, Candidate, and OutreachDraft with all required status enums, (2) Anthropic SDK integration with claude-haiku-4-5 for cost-efficient AI agents, and (3) a reusable BaseAgent pattern for all future agents to follow.
+
+Purpose: Phase 2 agents (company mapper, role identifier, outreach drafter) all depend on this foundation. BaseAgent abstracts the Anthropic SDK usage pattern so each agent focuses on its domain logic, not API plumbing.
+
+Output: Database models, agent base class, CompanyMapperAgent (functional), test infrastructure for agents.
+</objective>
+
+<context>
+From Phase 1 completion:
+- Job model exists with target_industries, target_company_types (JSON)
+- Client model exists as foreign key reference
+- FastAPI app has lifespan event for database initialization
+- SQLModel/SQLAlchemy patterns established
+- pytest + conftest fixtures ready
+
+Phase 2 extends Phase 1 foundation with:
+- Anthropic SDK for Claude agents (not LangChain — direct SDK usage)
+- Async function-calling pattern (claude-haiku-4-5 for cost efficiency)
+- Candidate/Outreach status tracking enums
+- Agent base class pattern (reusable for all three Phase 2 agents)
+- Background task support (FastAPI BackgroundTasks) for agent runs
+
+Key architectural decisions (from CONTEXT.md):
+- Use Anthropic SDK directly, not LangChain
+- claude-haiku-4-5 model for all agents (90% capability, 3x cost savings)
+- Mock company/candidate data (clearly labeled) — no real LinkedIn API yet
+- All responses validated as Pydantic models before DB persistence
+- Async function calls via Claude tool_use mechanism
+</context>
+
+<tasks>
+
+## Task 1: Add data models to models.py
+
+**Files:** src/app/models.py
+
+**Action:** Extend the existing Job model file with four new SQLModel tables:
+
+1. **HuntingStatus enum** (values: `pending`, `in_progress`, `completed`, `failed`)
+2. **HuntingSession model:** track per-job hunting runs
+   - Fields: id (PK), job_id (FK), status (HuntingStatus), created_at, updated_at, started_at, completed_at
+   - Used to associate target companies and candidates with a specific hunting run
+3. **TargetCompany model:** AI-identified target companies
+   - Fields: id (PK), hunting_session_id (FK), name, industry, size_description (e.g., "50-200 employees"), linkedin_url, created_at
+   - Mockable: These will be generated by the company mapper agent or added manually by consultant
+4. **CandidateStatus enum** (values: `hunting`, `approved`, `rejected`)
+5. **Candidate model:** discovered candidates at target companies
+   - Fields: id (PK), hunting_session_id (FK), target_company_id (FK), name, current_title, current_company, email, linkedin_url, status (CandidateStatus), created_at, updated_at
+6. **OutreachStatus enum** (values: `pending_review`, `approved`, `sent`, `replied`, `not_interested`, `error`)
+7. **OutreachDraft model:** AI-drafted messages per candidate
+   - Fields: id (PK), candidate_id (FK), job_id (FK), linkedin_message, email_message, status (OutreachStatus), created_at, updated_at, sent_at
+   - Note: linkedin_message and email_message are stored as TEXT columns (not JSON), trimmed at 10,000 chars each
+
+**Validation:** All models use SQLModel + Pydantic. No enums should have underscores in value names — use lowercase single words (e.g., `pending_review` not `pending-review`). Foreign keys indexed. Timestamps use `datetime.utcnow` factory defaults.
+
+**Test:** Import all models in test_models.py: `from src.app.models import HuntingSession, TargetCompany, Candidate, OutreachDraft, HuntingStatus, CandidateStatus, OutreachStatus`
+
+## Task 2: Create agents module structure and BaseAgent
+
+**Files:** src/app/agents/__init__.py, src/app/agents/base.py
+
+**Action:**
+
+1. Create `src/app/agents/` directory (Python package)
+
+2. In `src/app/agents/__init__.py`: Export the agent classes that will exist:
+```python
+from .company_mapper import CompanyMapperAgent
+__all__ = ["CompanyMapperAgent"]
+```
+
+3. In `src/app/agents/base.py`: Create the BaseAgent abstract class
+   - Constructor: takes `model: str` (defaults to "claude-haiku-4-5"), `api_key: str` (reads from ANTHROPIC_API_KEY env var)
+   - Initializes `anthropic.AsyncClient()` in constructor
+   - Method `async def run(request: Pydantic model) -> AgentResponse`:
+     - Calls Claude API with tool_use (structured outputs via tools)
+     - Validates response via Pydantic model before returning
+     - Returns AgentResponse with status ("success" | "error"), data (optional), error (optional string)
+   - Subclasses implement: `system_prompt()` → str, `tools()` → list of tool definitions, `parse_response()` → domain model
+   - Handle Anthropic API errors gracefully: catch `anthropic.APIError`, store in response.error, do NOT re-raise
+
+**Note:** Do NOT use LangChain or tool decorators. Use raw Anthropic SDK async/await patterns. Tool definitions are plain JSON dicts (openapi/json_schema format).
+
+**Test:** Create dummy test in test_agents.py that instantiates BaseAgent (it's abstract, so use a concrete mock subclass) and verifies initialization.
+
+## Task 3: Implement CompanyMapperAgent
+
+**Files:** src/app/agents/company_mapper.py
+
+**Action:** Create the CompanyMapperAgent that takes a Job context and generates a list of target companies.
+
+1. **CompanyMapperRequest Pydantic model:**
+   - job_title: str
+   - job_description: str
+   - target_industries: list[str]
+   - target_company_types: list[str] (e.g., ["startup", "scale-up", "established"])
+
+2. **CompanyMapperResponse Pydantic model:**
+   - companies: list[TargetCompanyItem]
+   - TargetCompanyItem: name, industry, size_description (e.g., "50-200"), linkedin_url (optional)
+
+3. **CompanyMapperAgent(BaseAgent):**
+   - `system_prompt()`: Instruct Claude to identify 5-10 target companies matching industries + company types
+   - `tools()`: Define a tool `identify_companies` with JSON schema asking for: company name, industry, size, LinkedIn URL
+   - `parse_response()`: Extract tool call results, validate against TargetCompanyItem schema, return CompanyMapperResponse
+   - `async def run(request: CompanyMapperRequest) -> AgentResponse`: Call parent.run(), return response
+
+4. **Mock data fallback:** If API fails or for testing, provide hardcoded list of 5 realistic companies (tech, finance, healthcare industries) with clearly marked comment: `# MOCK DATA — Replace with real API calls when LinkedIn API available`
+
+**Test in test_agents.py:**
+- Test CompanyMapperAgent.run() with a real Job context (use fixture from conftest)
+- Verify response contains 5+ companies with all fields
+- Verify CandidateStatus values match enum (e.g., response.companies[0].status == "approved")
+
+## Task 4: Update conftest.py for agent tests
+
+**Files:** tests/conftest.py
+
+**Action:** Add fixtures for agent testing:
+
+1. `hunting_session_fixture`: Create a HuntingSession record linked to the job fixture
+2. `target_companies_fixture`: Create 3 TargetCompany records linked to the hunting session
+3. `candidates_fixture`: Create 5 Candidate records (mix of approved/hunting/rejected statuses)
+
+**Test:** All fixtures should be queryable from db_session (use `session.exec(select(HuntingSession)).all()`)
+
+## Task 5: Add Anthropic SDK dependency and environment setup
+
+**Files:** pyproject.toml, .env.example
+
+**Action:**
+
+1. In `pyproject.toml` dependencies: Add `anthropic>=1.0.0`
+
+2. In `.env.example`: Add:
+```
+ANTHROPIC_API_KEY=sk-ant-...
+OPENAI_API_KEY=  # (optional, for future use)
+```
+
+3. In `src/app/agents/base.py`: Read ANTHROPIC_API_KEY from env using `os.getenv("ANTHROPIC_API_KEY")` with fallback to empty string (let Anthropic SDK raise error if missing at runtime)
+
+**Test:** `pytest -xvs tests/test_agents.py` should pass (use mock API key in test env or mock the Anthropic client)
+
+## Task 6: Write comprehensive agent tests
+
+**Files:** tests/test_agents.py
+
+**Action:** Add integration tests for the agent infrastructure:
+
+1. **Test BaseAgent initialization:** Verify AsyncClient is created with correct API key
+2. **Test CompanyMapperAgent.run():**
+   - Pass a real CompanyMapperRequest with job context
+   - Verify response has status="success" and companies list
+   - Verify each company has all required fields
+   - For mock data test: use env var SKIP_API_TESTS=1 to skip real API calls (use monkeypatch to mock Anthropic SDK)
+3. **Test error handling:** Mock an API error, verify agent catches it, returns AgentResponse with status="error"
+4. **Test response validation:** Mock API response with missing fields, verify Pydantic validation catches it
+
+**Verification command:** `pytest -xvs tests/test_agents.py -k "company_mapper"`
+
+Note: Use `pytest-asyncio` for async test functions. Mark with `@pytest.mark.asyncio`.
+
+</tasks>
+
+<verification>
+
+### Automated Tests
+```
+pytest -xvs tests/test_agents.py -k "test_company_mapper" --tb=short
+pytest -xvs tests/test_models.py::test_hunting_models --tb=short
+```
+
+### Manual Verification
+1. Import all models: `python -c "from src.app.models import HuntingSession, TargetCompany, Candidate, OutreachDraft; print('OK')"`
+2. Import all agents: `python -c "from src.app.agents import CompanyMapperAgent; print('OK')"`
+3. Verify Anthropic SDK available: `python -c "import anthropic; print(anthropic.__version__)"`
+4. Database tables created: `sqlite3 recruitment.db ".tables"` should include: client, job, hunting_session, target_company, candidate, outreach_draft
+
+### Expected Test Output
+```
+tests/test_agents.py::test_company_mapper_agent_initializes PASSED
+tests/test_agents.py::test_company_mapper_run_returns_response PASSED
+tests/test_agents.py::test_company_mapper_response_validation PASSED
+tests/test_agents.py::test_agent_error_handling PASSED
+tests/test_models.py::test_hunting_session_creation PASSED
+tests/test_models.py::test_candidate_status_enum PASSED
+tests/test_models.py::test_outreach_draft_model PASSED
+```
+
+</verification>
+
+<success_criteria>
+
+- All four new models (HuntingSession, TargetCompany, Candidate, OutreachDraft) created with full field list
+- All three enums (HuntingStatus, CandidateStatus, OutreachStatus) defined with correct values
+- BaseAgent abstract class provides system_prompt(), tools(), parse_response() contract
+- CompanyMapperAgent implements BaseAgent contract and generates companies via Claude API
+- Anthropic SDK integrated with error handling (APIError caught, not re-raised)
+- Mock data fallback for testing/demo (hardcoded companies with comment)
+- All tests pass: `pytest -xvs tests/test_agents.py tests/test_models.py`
+- Database initialized with all new tables on app startup
+- Agent responses validated as Pydantic models before storage
+- Environment variable ANTHROPIC_API_KEY configured in .env.example
+
+</success_criteria>
+
+<output>
+After completion, create `.planning/phases/02-hunting-outreach-ai-candidate-discovery/01-PLAN-SUMMARY.md` with:
+- What was built (models, agents, tests)
+- Verification results (test output)
+- Files created/modified
+- Commits made
+- Next steps (Plan 02 depends on this)
+</output>

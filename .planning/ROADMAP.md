@@ -21,13 +21,13 @@
 - ✅ 6 tasks, 11 files created, 6 commits
 - ✅ Summary: .planning/phases/01-foundation-job-project-setup/01-PLAN-SUMMARY.md
 
-### Plan 02 — Job management API routes and UI
-- FastAPI routes for job CRUD (create, list, detail, archive)
-- Jinja2 templates with Tailwind CSS and HTMX for interactive UI
-- Job creation form with all required fields
-- Job dashboard with status badges
-- Job detail view and edit form
-- Archive action with HTMX POST request
+### Plan 02 — Job management API routes and UI ✓ COMPLETE
+- ✅ FastAPI routes for job CRUD (create, list, detail, archive)
+- ✅ Jinja2 templates with Tailwind CSS and HTMX for interactive UI
+- ✅ Job creation form with all required fields
+- ✅ Job dashboard with status badges
+- ✅ Job detail view and edit form
+- ✅ Archive action with HTMX POST request
 
 **Verification:** Consultant can create a real job for a real client, define target industries, and see it in the dashboard. Job can be archived via UI button.
 
@@ -38,23 +38,38 @@
 
 **Requirements covered:** HUNT-01, HUNT-02, HUNT-03, HUNT-04, OUTR-01, OUTR-02, OUTR-03, OUTR-04
 
-### Plans
+**Plans:** 3 plans in 3 waves
 
-**2.1 — Company mapping agent**
-- AI agent: given industry + company-type criteria, generate a list of target companies
-- Output: company name, industry, size, LinkedIn company URL
-- Consultant can add, remove, or adjust the list
+### Plan 01 — Data models & AI agent infrastructure
+- Database models: HuntingSession, TargetCompany, Candidate, OutreachDraft
+- Status enums: HuntingStatus, CandidateStatus, OutreachStatus
+- Anthropic SDK integration (claude-haiku-4-5 for cost efficiency)
+- BaseAgent abstract class pattern (reusable for all agents)
+- CompanyMapperAgent implementation (generates target companies)
+- Test infrastructure for agent testing
+- 6 tasks, creates src/app/agents/ module, updates pyproject.toml with anthropic SDK
 
-**2.2 — Role identification agent**
-- AI agent: for each target company, identify who holds the target role and similar titles
-- Enrich with: name, current title, LinkedIn URL, email (where findable via public sources)
-- Output shown as candidate cards for consultant review
+### Plan 02 — Company mapping + role identification UI
+- FastAPI routes for hunting workflows: start session, list companies, approve/reject candidates
+- RoleIdentifierAgent (discovers candidates at target companies)
+- Jinja2 templates: hunting-companies.html, hunting-candidates.html
+- "Start Hunting" button on job detail (primary blue)
+- Company cards: name, industry, size, LinkedIn URL with remove action
+- Candidate cards: name, title, company, email, LinkedIn, status badge with approve/reject
+- Status badges CSS (cyan=hunting, green=approved, red=rejected)
+- HTMX integration for async updates
+- Integration tests for routes and agent
 
-**2.3 — Outreach drafting agent**
-- AI agent: for each approved candidate, draft a LinkedIn message + email
-- Drafts grounded in the JD — personalized to candidate's current role and company
-- Consultant approval flow: approve / edit / reject per candidate
-- System tracks outreach status: pending → sent → replied / not interested
+### Plan 03 — Outreach drafting agent + approval flow
+- OutreachDrafterAgent (generates LinkedIn message + email per candidate)
+- FastAPI routes: generate drafts, list/edit/approve/discard drafts, queue for sending
+- Jinja2 templates: outreach-drafts.html (draft review with tabs and edit), outreach-queue.html (status tracking)
+- Edit mode: inline textarea for message customization
+- Approval flow: "Approve & Queue" button (green), status tracking
+- Batch sending queue (marks approved as sent)
+- Status tracking: pending_review → approved → sent → replied/not_interested
+- Outreach timeline with timestamps per candidate
+- Integration tests for agent and routes
 
 **Verification:** Consultant runs a real hunting session for a job, reviews AI-generated candidates and outreach drafts, and marks at least one batch as ready to send.
 
@@ -132,5 +147,6 @@ This is a deployable, sellable product for the first client.
 - Automated LinkedIn outreach (pending ToS strategy)
 
 ---
+
 *Roadmap created: 2026-03-23*
-*Last updated: 2026-03-23 — Phase 1 plans finalized*
+*Last updated: 2026-03-24 — Phase 2 plans created*
