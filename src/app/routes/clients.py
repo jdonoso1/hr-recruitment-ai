@@ -11,8 +11,9 @@ from ..schemas import ClientCreate, ClientRead
 router = APIRouter(prefix="/clients", tags=["clients"])
 
 # Template setup
-templates_dir = Path(__file__).parent.parent.parent / "templates"
+templates_dir = Path(__file__).parent.parent.parent.parent / "templates"
 templates = Jinja2Templates(directory=str(templates_dir))
+templates.env.cache = None  # disable LRU cache — workaround for Jinja2 3.1.6 / Python 3.14 hashability bug
 
 
 @router.get("/create", response_class=HTMLResponse)
@@ -20,8 +21,7 @@ def client_create_form(
     request: Request,
 ):
     """Render client creation form — must be before /{client_id} to avoid route shadowing"""
-    return templates.TemplateResponse("clients/create.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "clients/create.html", {
         "errors": {},
     })
 

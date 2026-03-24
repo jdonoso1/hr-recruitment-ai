@@ -13,8 +13,9 @@ from ..schemas import JobCreate, JobUpdate, JobRead, JobListItem
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
 # Template setup
-templates_dir = Path(__file__).parent.parent.parent / "templates"
+templates_dir = Path(__file__).parent.parent.parent.parent / "templates"
 templates = Jinja2Templates(directory=str(templates_dir))
+templates.env.cache = None  # disable LRU cache — workaround for Jinja2 3.1.6 / Python 3.14 hashability bug
 
 
 # ===== HTML View Routes (GET) =====
@@ -38,7 +39,7 @@ def jobs_list_view(
         if isinstance(job.target_company_types, str):
             job.target_company_types = json.loads(job.target_company_types) if job.target_company_types else []
 
-    return templates.TemplateResponse("jobs/list.html", {"request": request, "jobs": jobs})
+    return templates.TemplateResponse(request, "jobs/list.html", {"jobs": jobs})
 
 
 @router.get("/create", response_class=HTMLResponse)
@@ -48,8 +49,7 @@ def job_create_form(
 ):
     """Render job creation form"""
     clients = session.exec(select(Client)).all()
-    return templates.TemplateResponse("jobs/form.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "jobs/form.html", {
         "clients": clients,
         "job": None,
         "errors": {},
@@ -75,8 +75,7 @@ def job_edit_form(
     if isinstance(job.target_company_types, str):
         job.target_company_types = json.loads(job.target_company_types) if job.target_company_types else []
 
-    return templates.TemplateResponse("jobs/form.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "jobs/form.html", {
         "clients": clients,
         "job": job,
         "errors": {},
@@ -102,8 +101,7 @@ def job_detail_view(
     if isinstance(job.target_company_types, str):
         job.target_company_types = json.loads(job.target_company_types) if job.target_company_types else []
 
-    return templates.TemplateResponse("jobs/detail.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "jobs/detail.html", {
         "job": job,
         "client": client,
     })
