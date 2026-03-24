@@ -1,10 +1,12 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 
 # Import database and models to ensure SQLModel metadata is loaded
 from .db import create_db_tables
 from .models import Client, Job, JobStatus  # Import to ensure models are registered
+from .routes import jobs, clients
 
 # Lifespan event to create database tables on startup
 @asynccontextmanager
@@ -22,6 +24,19 @@ app = FastAPI(
     description="AI-powered recruitment platform for consultants",
     version="0.1.0",
     lifespan=lifespan,
+)
+
+# Include API routers
+app.include_router(jobs.router)
+app.include_router(clients.router)
+
+# Add CORS middleware (for later frontend integration if needed)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Adjust for production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Health check endpoint
