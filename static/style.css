@@ -1,0 +1,27 @@
+/* Custom styles for HR Recruitment AI
+ * Most styling is handled via Tailwind CSS CDN
+ * This file contains minimal custom overrides
+ */
+
+/* Add any custom animations or styles here */
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* HTMX loading state */
+.htmx-request .htmx-indicator {
+    display: inline-block;
+}
+
+.htmx-request.htmx-indicator {
+    display: none;
+}
