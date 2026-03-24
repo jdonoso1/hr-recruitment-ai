@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Job: {{ job.title }} — HR Recruitment AI{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-4xl font-bold">{{ job.title }}</h2>
+        <span class="badge-{{ job.status }} px-4 py-2 rounded-lg text-sm font-medium">
+            {{ job.status.replace('_', ' ').title() }}
+        </span>
+    </div>
+    <a href="/jobs" class="text-blue-600 hover:text-blue-700 text-sm">← Back to Jobs</a>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Main job details -->
+    <div class="lg:col-span-2 bg-white border border-gray-200 rounded-lg p-8">
+        <!-- Client info -->
+        <div class="mb-6 pb-6 border-b border-gray-200">
+            <p class="text-sm text-gray-600">Client</p>
+            <p class="text-lg font-semibold">{% if client %}{{ client.name }}{% else %}Unknown{% endif %}</p>
+        </div>
+
+        <!-- Basic info grid -->
+        <div class="grid grid-cols-2 gap-6 mb-8">
+            <div>
+                <p class="text-sm text-gray-600 mb-1">Seniority Level</p>
+                <p class="font-semibold">{{ job.seniority }}</p>
+            </div>
+            {% if job.required_experience_years %}
+            <div>
+                <p class="text-sm text-gray-600 mb-1">Required Experience</p>
+                <p class="font-semibold">{{ job.required_experience_years }} years</p>
+            </div>
+            {% endif %}
+            {% if job.salary_min or job.salary_max %}
+            <div>
+                <p class="text-sm text-gray-600 mb-1">Salary Range</p>
+                <p class="font-semibold">
+                    {% if job.salary_min and job.salary_max %}
+                        ${{ job.salary_min|int }}—${{ job.salary_max|int }}
+                    {% elif job.salary_min %}
+                        ${{ job.salary_min|int }}+
+                    {% else %}
+                        Up to ${{ job.salary_max|int }}
+                    {% endif %}
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Description -->
+        <div class="mb-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Job Description</h3>
+            <p class="text-gray-700 whitespace-pre-wrap">{{ job.description }}</p>
+        </div>
+
+        <!-- Target industries and company types -->
+        {% if job.target_industries or job.target_company_types %}
+        <div class="mb-8 pb-8 border-b border-gray-200">
+            {% if job.target_industries %}
+            <div class="mb-4">
+                <h4 class="text-sm font-semibold text-gray-700 mb-2">Target Industries</h4>
+                <div class="flex flex-wrap gap-2">
+                    {% for industry in job.target_industries %}
+                    <span class="bg-blue-100 text-blue-900 px-3 py-1 rounded-full text-sm">{{ industry }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if job.target_company_types %}
+            <div>
+                <h4 class="text-sm font-semibold text-gray-700 mb-2">Target Company Types</h4>
+                <div class="flex flex-wrap gap-2">
+                    {% for company_type in job.target_company_types %}
+                    <span class="bg-green-100 text-green-900 px-3 py-1 rounded-full text-sm">{{ company_type }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Timestamps -->
+        <div class="text-xs text-gray-500">
+            <p>Created: {{ job.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+            <p>Last updated: {{ job.updated_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+        </div>
+    </div>
+
+    <!-- Sidebar actions -->
+    <div class="lg:col-span-1">
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 sticky top-24">
+            <h3 class="font-semibold text-gray-900 mb-4">Actions</h3>
+
+            <a href="/jobs/{{ job.id }}/edit" class="btn-secondary w-full text-center mb-3">Edit Job</a>
+
+            <button hx-post="/jobs/{{ job.id }}/archive" hx-target="body" class="btn-destructive w-full" onclick="return confirm('Archive this job? You can reopen it anytime.')">
+                Archive Job
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
