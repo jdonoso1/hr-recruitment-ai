@@ -165,6 +165,45 @@ def create_job_form(
         return RedirectResponse(url="/jobs/create", status_code=303)
 
 
+@router.post("/{job_id}/edit", response_class=RedirectResponse)
+def update_job_form(
+    job_id: int,
+    request: Request,
+    client_id: int = Form(...),
+    title: str = Form(...),
+    description: str = Form(...),
+    seniority: str = Form(...),
+    salary_min: int | None = Form(None),
+    salary_max: int | None = Form(None),
+    required_experience_years: int | None = Form(None),
+    target_industries: str = Form(""),
+    target_company_types: str = Form(""),
+    session: Session = Depends(get_session),
+):
+    """Update job from HTML form submission"""
+    job = session.exec(select(Job).where(Job.id == job_id)).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    industries = [i.strip() for i in target_industries.split(',') if i.strip()] if target_industries else []
+    company_types = [c.strip() for c in target_company_types.split(',') if c.strip()] if target_company_types else []
+
+    job.client_id = client_id
+    job.title = title
+    job.description = description
+    job.seniority = seniority
+    job.salary_min = salary_min
+    job.salary_max = salary_max
+    job.required_experience_years = required_experience_years
+    job.target_industries = industries
+    job.target_company_types = company_types
+    job.updated_at = datetime.utcnow()
+
+    session.add(job)
+    session.commit()
+    return RedirectResponse(url=f"/jobs/{job_id}", status_code=303)
+
+
 # ===== API Routes (JSON-based) =====
 
 @router.post("/api", response_model=JobRead, status_code=201)
