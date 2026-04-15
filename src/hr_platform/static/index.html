@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HR Intelligence Platform</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #21262d;
+    --border: #30363d;
+    --accent: #6e40c9;
+    --accent2: #4f8ef7;
+    --success: #3fb950;
+    --warning: #d29922;
+    --danger: #f85149;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --radius: 12px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 240px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 16px;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .logo {
+    font-size: 18px;
+    font-weight: 700;
+    padding: 8px 12px 20px;
+    background: linear-gradient(135deg, #6e40c9, #4f8ef7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--muted);
+    transition: all 0.15s;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+  }
+
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: rgba(110, 64, 201, 0.15); color: #a070f0; }
+  .nav-item .icon { font-size: 16px; width: 20px; }
+
+  /* ── Main ── */
+  .main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px 40px;
+  }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .card-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ── Forms ── */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .form-grid.single { grid-template-columns: 1fr; }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .field.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="number"],
+  textarea,
+  select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-size: 14px;
+    width: 100%;
+    transition: border-color 0.15s;
+    font-family: inherit;
+  }
+
+  input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(110, 64, 201, 0.12);
+  }
+
+  textarea { resize: vertical; min-height: 100px; }
+
+  .tag-input-container {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 44px;
+    cursor: text;
+  }
+
+  .tag-input-container:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(110, 64, 201, 0.12);
+  }
+
+  .tag {
+    background: rgba(110, 64, 201, 0.2);
+    color: #a070f0;
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .tag-remove {
+    cursor: pointer;
+    opacity: 0.7;
+    font-size: 11px;
+  }
+
+  .tag-remove:hover { opacity: 1; }
+
+  .tag-input {
+    border: none;
+    background: none;
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .hint { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  /* ── Toggle ── */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .toggle-row:last-child { border-bottom: none; }
+
+  .toggle-label { font-size: 14px; }
+  .toggle-desc { font-size: 12px; color: var(--muted); }
+
+  .toggle {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+
+  .toggle input { display: none; }
+
+  .slider {
+    position: absolute;
+    inset: 0;
+    background: var(--border);
+    border-radius: 24px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  .slider::before {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: 3px;
+    top: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.2s;
+  }
+
+  .toggle input:checked + .slider { background: var(--accent); }
+  .toggle input:checked + .slider::before { transform: translateX(20px); }
+
+  /* ── Buttons ── */
+  .btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #6e40c9, #4f8ef7);
+    color: white;
+  }
+
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .btn-secondary:hover { border-color: var(--muted); }
+
+  .btn-danger {
+    background: rgba(248, 81, 73, 0.1);
+    color: var(--danger);
+    border: 1px solid rgba(248, 81, 73, 0.3);
+  }
+
+  .btn-sm { padding: 6px 14px; font-size: 13px; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ── Steps wizard ── */
+  .steps {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 32px;
+  }
+
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+  }
+
+  .step-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    color: var(--muted);
+  }
+
+  .step.active .step-circle {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  .step.done .step-circle {
+    background: var(--success);
+    border-color: var(--success);
+    color: white;
+  }
+
+  .step-label {
+    font-size: 13px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .step.active .step-label { color: var(--text); font-weight: 500; }
+  .step.done .step-label { color: var(--success); }
+
+  .step-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+    margin: 0 12px;
+  }
+
+  .step-line.done { background: var(--success); }
+
+  /* ── Drop zone ── */
+  .dropzone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 40px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .dropzone:hover, .dropzone.drag-over {
+    border-color: var(--accent);
+    background: rgba(110, 64, 201, 0.05);
+  }
+
+  .dropzone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .dropzone-icon { font-size: 40px; margin-bottom: 12px; }
+  .dropzone-text { color: var(--muted); font-size: 14px; }
+  .dropzone-text strong { color: var(--text); }
+
+  /* ── File list ── */
+  .file-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--surface2);
+    border-radius: 8px;
+    margin-top: 10px;
+  }
+
+  .file-icon { font-size: 24px; }
+  .file-name { font-size: 14px; flex: 1; }
+  .file-size { font-size: 12px; color: var(--muted); }
+  .file-status { font-size: 13px; }
+
+  /* ── Status badges ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .badge-open { background: rgba(63, 185, 80, 0.15); color: var(--success); }
+  .badge-screening { background: rgba(79, 142, 247, 0.15); color: var(--accent2); }
+  .badge-closed { background: rgba(139, 148, 158, 0.15); color: var(--muted); }
+  .badge-pro { background: rgba(210, 153, 34, 0.15); color: var(--warning); }
+
+  /* ── Score bar ── */
+  .score-bar { width: 100%; height: 6px; background: var(--border); border-radius: 6px; overflow: hidden; }
+  .score-fill { height: 100%; border-radius: 6px; transition: width 0.5s ease; }
+  .score-high { background: var(--success); }
+  .score-mid { background: var(--warning); }
+  .score-low { background: var(--danger); }
+
+  /* ── Result cards ── */
+  .candidate-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 14px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 16px;
+    align-items: center;
+    transition: border-color 0.15s;
+  }
+
+  .candidate-card:hover { border-color: var(--accent); }
+
+  .rank-badge {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+  }
+
+  .rank-1 { background: rgba(210, 153, 34, 0.2); color: #e3a008; }
+  .rank-2 { background: rgba(139, 148, 158, 0.2); color: var(--muted); }
+  .rank-3 { background: rgba(180, 100, 60, 0.2); color: #cd7f32; }
+  .rank-n { background: var(--surface2); color: var(--muted); }
+
+  .candidate-info h3 { font-size: 15px; margin-bottom: 4px; }
+  .candidate-info p { font-size: 13px; color: var(--muted); }
+
+  .scores-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 80px);
+    gap: 12px;
+    text-align: center;
+  }
+
+  .score-item label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 4px; }
+  .score-item .val { font-size: 18px; font-weight: 700; }
+
+  /* ── Loading spinner ── */
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-state {
+    text-align: center;
+    padding: 60px;
+  }
+
+  /* ── Header ── */
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  .page-title { font-size: 22px; font-weight: 700; }
+  .page-subtitle { font-size: 14px; color: var(--muted); margin-top: 2px; }
+
+  /* ── Job cards on dashboard ── */
+  .job-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+
+  .job-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .job-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .job-card h3 { font-size: 15px; margin-bottom: 4px; }
+  .job-card .company { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+
+  .new-job-card {
+    border-style: dashed;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--muted);
+    min-height: 140px;
+  }
+
+  .new-job-card:hover { color: var(--text); border-color: var(--accent); }
+  .new-job-card .plus { font-size: 32px; }
+
+  /* ── LinkedIn paste area ── */
+  .linkedin-section {
+    margin-top: 20px;
+  }
+
+  .linkedin-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 10px;
+    cursor: pointer;
+    color: var(--muted);
+  }
+
+  .linkedin-header:hover { color: var(--text); }
+
+  .linkedin-profiles { display: flex; flex-direction: column; gap: 10px; }
+
+  .linkedin-entry {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .linkedin-entry textarea {
+    flex: 1;
+    min-height: 80px;
+    border: none;
+    background: none;
+    padding: 0;
+    box-shadow: none;
+  }
+
+  /* ── Divider ── */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 20px 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .divider::before, .divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── Alert ── */
+  .alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .alert-success { background: rgba(63, 185, 80, 0.1); border: 1px solid rgba(63, 185, 80, 0.3); color: var(--success); }
+  .alert-error { background: rgba(248, 81, 73, 0.1); border: 1px solid rgba(248, 81, 73, 0.3); color: var(--danger); }
+  .alert-info { background: rgba(79, 142, 247, 0.1); border: 1px solid rgba(79, 142, 247, 0.3); color: var(--accent2); }
+
+  /* ── Wizard footer ── */
+  .wizard-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    margin-top: 24px;
+  }
+
+  /* ── Misc ── */
+  .flex { display: flex; }
+  .gap-2 { gap: 8px; }
+  .gap-3 { gap: 12px; }
+  .mb-1 { margin-bottom: 4px; }
+  .mb-2 { margin-bottom: 8px; }
+  .mt-2 { margin-top: 8px; }
+  .text-muted { color: var(--muted); font-size: 13px; }
+
+  .empty-state {
+    text-align: center;
+    padding: 80px 40px;
+    color: var(--muted);
+  }
+
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state h3 { font-size: 16px; color: var(--text); margin-bottom: 8px; }
+
+  .progress-log {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    font-family: monospace;
+    font-size: 13px;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 16px;
+  }
+
+  .log-line { margin-bottom: 4px; }
+  .log-line .stage { color: var(--accent2); margin-right: 8px; }
+  .log-line .msg { color: var(--text); }
+</style>
+</head>
+<body>
+
+<!-- ─── Sidebar ─────────────────────────────── -->
+<nav class="sidebar">
+  <div class="logo">⚡ HR Platform</div>
+  <button class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard">
+    <span class="icon">🏠</span> Dashboard
+  </button>
+  <button class="nav-item" onclick="showPage('new-pipeline')" id="nav-new-pipeline">
+    <span class="icon">✨</span> New Pipeline
+  </button>
+  <button class="nav-item" onclick="showPage('candidates')" id="nav-candidates">
+    <span class="icon">👥</span> Candidates
+  </button>
+  <div style="flex:1"></div>
+  <div style="padding: 12px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--border);">
+    <div style="font-weight:500; margin-bottom:4px;">Connected to API</div>
+    <div id="api-status">Checking...</div>
+  </div>
+</nav>
+
+<!-- ─── Main ─────────────────────────────────── -->
+<main class="main">
+
+  <!-- ── DASHBOARD ── -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Dashboard</div>
+        <div class="page-subtitle">Your active hiring pipelines</div>
+      </div>
+      <button class="btn btn-primary" onclick="showPage('new-pipeline')">
+        + New Pipeline
+      </button>
+    </div>
+
+    <div id="dashboard-jobs" class="job-grid">
+      <div class="job-card new-job-card" onclick="showPage('new-pipeline')">
+        <div class="plus">+</div>
+        <div style="font-size:14px">Start a new pipeline</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── NEW PIPELINE WIZARD ── -->
+  <div class="page" id="page-new-pipeline">
+    <div class="page-header">
+      <div>
+        <div class="page-title">New Hiring Pipeline</div>
+        <div class="page-subtitle">Set up a job and run AI screening in minutes</div>
+      </div>
+    </div>
+
+    <!-- Steps -->
+    <div class="steps">
+      <div class="step active" id="step-indicator-1">
+        <div class="step-circle">1</div>
+        <div class="step-label">Company</div>
+      </div>
+      <div class="step-line" id="step-line-1"></div>
+      <div class="step" id="step-indicator-2">
+        <div class="step-circle">2</div>
+        <div class="step-label">Job Details</div>
+      </div>
+      <div class="step-line" id="step-line-2"></div>
+      <div class="step" id="step-indicator-3">
+        <div class="step-circle">3</div>
+        <div class="step-label">Candidates</div>
+      </div>
+      <div class="step-line" id="step-line-3"></div>
+      <div class="step" id="step-indicator-4">
+        <div class="step-circle">4</div>
+        <div class="step-label">Run & Results</div>
+      </div>
+    </div>
+
+    <!-- Step 1: Company -->
+    <div id="wizard-step-1">
+      <div class="card">
+        <div class="card-title">🏢 Company / Client</div>
+        <div class="form-grid">
+          <div class="field">
+            <label>Company Name *</label>
+            <input type="text" id="client-name" placeholder="e.g. Acme Corp" />
+          </div>
+          <div class="field">
+            <label>Contact Name</label>
+            <input type="text" id="client-contact" placeholder="e.g. Sarah Johnson" />
+          </div>
+          <div class="field">
+            <label>Contact Email</label>
+            <input type="email" id="client-email" placeholder="hr@company.com" />
+          </div>
+          <div class="field">
+            <label>Plan</label>
+            <select id="client-plan">
+              <option value="starter">Starter</option>
+              <option value="pro" selected>Pro</option>
+              <option value="enterprise">Enterprise</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="wizard-footer">
+        <button class="btn btn-secondary" onclick="showPage('dashboard')">Cancel</button>
+        <button class="btn btn-primary" onclick="wizardNext(1)">Next: Job Details →</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Job Details -->
+    <div id="wizard-step-2" style="display:none">
+      <div class="card">
+        <div class="card-title">💼 Job Details</div>
+        <div class="form-grid">
+          <div class="field">
+            <label>Job Title *</label>
+            <input type="text" id="job-title" placeholder="e.g. Senior Backend Engineer" />
+          </div>
+          <div class="field">
+            <label>Company Name *</label>
+            <input type="text" id="job-company" placeholder="e.g. Acme Corp" />
+          </div>
+          <div class="field full">
+            <label>Job Description *</label>
+            <textarea id="job-description" rows="4" placeholder="Describe the role, responsibilities, and what you're looking for..."></textarea>
+          </div>
+          <div class="field full">
+            <label>Required Skills</label>
+            <div class="tag-input-container" id="skills-container" onclick="document.getElementById('skills-input').focus()">
+              <input class="tag-input" id="skills-input" placeholder="Type a skill and press Enter..." />
+            </div>
+            <div class="hint">e.g. Python, FastAPI, PostgreSQL, Docker</div>
+          </div>
+          <div class="field full">
+            <label>Nice to Have</label>
+            <div class="tag-input-container" id="nice-container" onclick="document.getElementById('nice-input').focus()">
+              <input class="tag-input" id="nice-input" placeholder="Type a skill and press Enter..." />
+            </div>
+          </div>
+          <div class="field">
+            <label>Min Experience (years)</label>
+            <input type="number" id="exp-min" placeholder="3" min="0" />
+          </div>
+          <div class="field">
+            <label>Max Experience (years)</label>
+            <input type="number" id="exp-max" placeholder="10" min="0" />
+          </div>
+          <div class="field">
+            <label>Location</label>
+            <input type="text" id="job-location" placeholder="e.g. New York, NY" />
+          </div>
+          <div class="field">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+              <label style="margin:0">Salary Range (USD)</label>
+              <div style="display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:6px;overflow:hidden;font-size:12px">
+                <button type="button" id="period-monthly" onclick="setSalaryPeriod('monthly')"
+                  style="padding:4px 12px;border:none;cursor:pointer;background:var(--accent);color:white;font-size:12px;font-weight:500">Monthly</button>
+                <button type="button" id="period-yearly" onclick="setSalaryPeriod('yearly')"
+                  style="padding:4px 12px;border:none;cursor:pointer;background:none;color:var(--muted);font-size:12px;font-weight:500">Yearly</button>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <input type="number" id="salary-min" placeholder="Min" style="width:50%" />
+              <input type="number" id="salary-max" placeholder="Max" style="width:50%" />
+            </div>
+            <div class="hint" id="salary-hint">Monthly salary — will be converted to yearly for AI comparison</div>
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">Remote OK</div>
+              <div class="toggle-desc">Candidates can work remotely</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="remote-ok" />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="wizard-footer">
+        <button class="btn btn-secondary" onclick="wizardBack(2)">← Back</button>
+        <button class="btn btn-primary" onclick="wizardNext(2)">Next: Add Candidates →</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Candidates -->
+    <div id="wizard-step-3" style="display:none">
+      <div class="card">
+        <div class="card-title">📄 Upload CVs / Resumes</div>
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="cv-file-input" multiple accept=".pdf,.doc,.docx" />
+          <div class="dropzone-icon">📁</div>
+          <div class="dropzone-text">
+            <strong>Drag & drop CV files here</strong><br>
+            or click to browse — PDF, DOC, DOCX
+          </div>
+        </div>
+        <div id="file-list"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🔗 LinkedIn Profiles</div>
+        <p class="text-muted mb-2">Paste the text from a LinkedIn profile (copy the "About" + experience section).</p>
+        <div class="linkedin-profiles" id="linkedin-profiles">
+          <div class="linkedin-entry">
+            <div style="font-size:20px;margin-top:2px">🔗</div>
+            <textarea placeholder="Paste LinkedIn profile text here...&#10;&#10;Name: John Doe&#10;Title: Senior Engineer at Acme&#10;Experience: ..."></textarea>
+            <button class="btn btn-sm" style="color:var(--danger);background:none;border:none;cursor:pointer" onclick="this.closest('.linkedin-entry').remove()">✕</button>
+          </div>
+        </div>
+        <button class="btn btn-secondary btn-sm mt-2" onclick="addLinkedInEntry()">+ Add another profile</button>
+      </div>
+
+      <div class="wizard-footer">
+        <button class="btn btn-secondary" onclick="wizardBack(3)">← Back</button>
+        <button class="btn btn-primary" onclick="wizardNext(3)" id="btn-run-pipeline">
+          🚀 Run AI Pipeline
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 4: Run & Results -->
+    <div id="wizard-step-4" style="display:none">
+      <div id="pipeline-running" class="card loading-state" style="display:none">
+        <div class="spinner"></div>
+        <div style="font-size:16px;font-weight:600;margin-bottom:8px">Running AI Pipeline...</div>
+        <div class="text-muted">Screening candidates, generating interview questions, enriching profiles</div>
+        <div class="progress-log" id="progress-log">
+          <div class="log-line"><span class="stage">[start]</span><span class="msg">Initializing pipeline...</span></div>
+        </div>
+      </div>
+
+      <div id="pipeline-results" style="display:none">
+        <div class="alert alert-success">
+          ✅ Pipeline complete! Here are your ranked candidates.
+        </div>
+
+        <div class="card">
+          <div class="card-title">📊 Pipeline Summary</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;text-align:center">
+            <div>
+              <div style="font-size:28px;font-weight:700" id="kpi-processed">—</div>
+              <div class="text-muted">Candidates Processed</div>
+            </div>
+            <div>
+              <div style="font-size:28px;font-weight:700" id="kpi-screened">—</div>
+              <div class="text-muted">Screened</div>
+            </div>
+            <div>
+              <div style="font-size:28px;font-weight:700;color:var(--success)" id="kpi-hours">—</div>
+              <div class="text-muted">Hours Saved</div>
+            </div>
+            <div>
+              <div style="font-size:28px;font-weight:700;color:var(--accent2)" id="kpi-score">—</div>
+              <div class="text-muted">Top Score</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🏆 Ranked Candidates</div>
+          <div id="candidate-results"></div>
+        </div>
+
+        <div style="display:flex;gap:12px;margin-top:8px">
+          <button class="btn btn-primary" id="btn-download-report" onclick="downloadReport()">⬇ Download Report (.pptx)</button>
+          <button class="btn btn-secondary" onclick="showPage('dashboard')">Back to Dashboard</button>
+        </div>
+      </div>
+
+      <div id="pipeline-error" style="display:none">
+        <div class="alert alert-error" id="pipeline-error-msg">Something went wrong.</div>
+        <button class="btn btn-secondary" onclick="wizardBack(4)">← Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CANDIDATES PAGE ── -->
+  <div class="page" id="page-candidates">
+    <div class="page-header">
+      <div>
+        <div class="page-title">All Candidates</div>
+        <div class="page-subtitle">Profiles from all pipelines</div>
+      </div>
+    </div>
+    <div id="candidates-list">
+      <div class="empty-state">
+        <div class="icon">👥</div>
+        <h3>No candidates yet</h3>
+        <p>Start a pipeline to add candidates</p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ─── State ─────────────────────────────────────────────────────────────────
+const state = {
+  clientId: null,
+  jobId: null,
+  cvFiles: [],
+  linkedinProfiles: [],
+  evaluations: [],
+  currentStep: 1,
+  skills: [],
+  niceToHave: [],
+};
+
+// ─── Navigation ─────────────────────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  const nav = document.getElementById('nav-' + id);
+  if (nav) nav.classList.add('active');
+
+  if (id === 'dashboard') loadDashboard();
+  if (id === 'new-pipeline') resetWizard();
+  if (id === 'candidates') loadCandidates();
+}
+
+// ─── API ────────────────────────────────────────────────────────────────────
+async function api(method, path, body, isForm = false) {
+  const opts = { method, headers: {} };
+  if (body && !isForm) {
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  } else if (body && isForm) {
+    opts.body = body;
+  }
+  const res = await fetch(path, opts);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || 'API error');
+  }
+  return res.json();
+}
+
+// ─── Health check ───────────────────────────────────────────────────────────
+async function checkHealth() {
+  try {
+    await fetch('http://localhost:8000/health');
+    document.getElementById('api-status').innerHTML = '<span style="color:var(--success)">● Online</span>';
+  } catch {
+    document.getElementById('api-status').innerHTML = '<span style="color:var(--danger)">● Offline</span>';
+  }
+}
+
+// ─── Dashboard ──────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  // We don't have a global jobs list endpoint so show a note
+  const container = document.getElementById('dashboard-jobs');
+  container.innerHTML = `
+    <div class="job-card new-job-card" onclick="showPage('new-pipeline')">
+      <div class="plus">+</div>
+      <div style="font-size:14px">Start a new pipeline</div>
+    </div>
+  `;
+
+  // Show last result if we have one
+  if (state.jobId && state.evaluations.length > 0) {
+    const topCandidate = state.evaluations[0];
+    const card = document.createElement('div');
+    card.className = 'job-card';
+    card.innerHTML = `
+      <h3>${state.jobTitle || 'Recent Job'}</h3>
+      <div class="company">${state.jobCompany || ''}</div>
+      <div class="flex gap-2" style="margin-bottom:12px">
+        <span class="badge badge-screening">Screening Done</span>
+      </div>
+      <div class="text-muted">${state.evaluations.length} candidates ranked</div>
+      <div style="margin-top:12px;font-size:13px">Top: <strong>${topCandidate.candidate_name || 'Candidate'}</strong> — Score ${topCandidate.screening_score || '?'}/10</div>
+    `;
+    card.onclick = () => { showPage('new-pipeline'); goToStep(4); showResults(); };
+    container.appendChild(card);
+  }
+}
+
+// ─── Wizard ─────────────────────────────────────────────────────────────────
+function resetWizard() {
+  state.cvFiles = [];
+  state.linkedinProfiles = [];
+  goToStep(1);
+  document.getElementById('file-list').innerHTML = '';
+  document.getElementById('pipeline-running').style.display = 'none';
+  document.getElementById('pipeline-results').style.display = 'none';
+  document.getElementById('pipeline-error').style.display = 'none';
+}
+
+function goToStep(n) {
+  for (let i = 1; i <= 4; i++) {
+    const step = document.getElementById('wizard-step-' + i);
+    if (step) step.style.display = i === n ? 'block' : 'none';
+
+    const ind = document.getElementById('step-indicator-' + i);
+    if (ind) {
+      ind.className = 'step' + (i === n ? ' active' : i < n ? ' done' : '');
+      if (i < n) ind.querySelector('.step-circle').textContent = '✓';
+      else ind.querySelector('.step-circle').textContent = i;
+    }
+
+    const line = document.getElementById('step-line-' + i);
+    if (line) line.className = 'step-line' + (i < n ? ' done' : '');
+  }
+  state.currentStep = n;
+}
+
+async function wizardNext(step) {
+  if (step === 1) {
+    const name = document.getElementById('client-name').value.trim();
+    if (!name) return alert('Please enter a company name.');
+    try {
+      const client = await api('POST', '/clients', {
+        name,
+        contact_name: document.getElementById('client-contact').value || null,
+        email: document.getElementById('client-email').value || null,
+        plan: document.getElementById('client-plan').value,
+      });
+      state.clientId = client.client_id;
+      // Auto-fill company name in job form
+      document.getElementById('job-company').value = name;
+      goToStep(2);
+    } catch (e) {
+      alert('Error creating client: ' + e.message);
+    }
+  } else if (step === 2) {
+    const title = document.getElementById('job-title').value.trim();
+    const company = document.getElementById('job-company').value.trim();
+    const desc = document.getElementById('job-description').value.trim();
+    if (!title || !company || !desc) return alert('Please fill in Job Title, Company, and Description.');
+    try {
+      const job = await api('POST', '/jobs', {
+        client_id: state.clientId,
+        title,
+        company,
+        description: desc,
+        required_skills: state.skills,
+        nice_to_have: state.niceToHave,
+        experience_min: parseInt(document.getElementById('exp-min').value) || null,
+        experience_max: parseInt(document.getElementById('exp-max').value) || null,
+        location: document.getElementById('job-location').value || null,
+        salary_min: toYearly(parseFloat(document.getElementById('salary-min').value) || null),
+        salary_max: toYearly(parseFloat(document.getElementById('salary-max').value) || null),
+        remote_ok: document.getElementById('remote-ok').checked,
+      });
+      state.jobId = job.job_id;
+      state.jobTitle = title;
+      state.jobCompany = company;
+      goToStep(3);
+    } catch (e) {
+      alert('Error creating job: ' + e.message);
+    }
+  } else if (step === 3) {
+    const files = document.getElementById('cv-file-input').files;
+    const linkedinEntries = document.querySelectorAll('#linkedin-profiles textarea');
+    const profiles = Array.from(linkedinEntries).map(t => t.value.trim()).filter(Boolean);
+
+    if (files.length === 0 && profiles.length === 0) {
+      return alert('Please add at least one CV or LinkedIn profile.');
+    }
+
+    goToStep(4);
+    await runPipeline(files, profiles);
+  }
+}
+
+function wizardBack(step) {
+  goToStep(step - 1);
+}
+
+// ─── Run Pipeline ────────────────────────────────────────────────────────────
+async function runPipeline(files, profiles) {
+  document.getElementById('pipeline-running').style.display = 'block';
+  document.getElementById('pipeline-results').style.display = 'none';
+  document.getElementById('pipeline-error').style.display = 'none';
+
+  const log = document.getElementById('progress-log');
+  function addLog(stage, msg) {
+    log.innerHTML += `<div class="log-line"><span class="stage">[${stage}]</span><span class="msg">${msg}</span></div>`;
+    log.scrollTop = log.scrollHeight;
+  }
+
+  try {
+    // Upload CVs
+    if (files.length > 0) {
+      addLog('ingest', `Uploading ${files.length} CV file(s)...`);
+      for (const file of files) {
+        const form = new FormData();
+        form.append('client_id', state.clientId);
+        form.append('job_id', state.jobId);
+        form.append('file', file);
+        try {
+          const res = await fetch('/candidates/ingest/cv', { method: 'POST', body: form });
+          const data = await res.json();
+          addLog('ingest', `✓ Ingested: ${data.name || file.name}`);
+        } catch (e) {
+          addLog('ingest_error', `Failed: ${file.name}`);
+        }
+      }
+    }
+
+    addLog('screen', 'Running AI screening & ranking...');
+
+    // Run workflow
+    const wf = await api('POST', '/workflow/run', {
+      job_id: state.jobId,
+      client_name: document.getElementById('client-name').value,
+      linkedin_profiles: profiles,
+      output_dir: '/tmp',
+    });
+
+    addLog('screen', `✓ ${wf.candidates_screened} candidates screened`);
+    addLog('present', 'Generating presentation report...');
+    addLog('kpi', `✓ Pipeline complete — KPI: ${wf.kpi_id}`);
+
+    // Load evaluations for display
+    try {
+      state.evaluations = await api('GET', `/jobs/${state.jobId}/evaluations`);
+    } catch {}
+
+    state.kpi = wf;
+    state.reportJobId = state.jobId;
+
+    document.getElementById('pipeline-running').style.display = 'none';
+    showResults();
+
+  } catch (e) {
+    document.getElementById('pipeline-running').style.display = 'none';
+    document.getElementById('pipeline-error').style.display = 'block';
+    document.getElementById('pipeline-error-msg').textContent = '❌ ' + e.message;
+  }
+}
+
+function showResults() {
+  document.getElementById('pipeline-results').style.display = 'block';
+
+  const kpi = state.kpi || {};
+  document.getElementById('kpi-processed').textContent = kpi.candidates_processed ?? '—';
+  document.getElementById('kpi-screened').textContent = kpi.candidates_screened ?? '—';
+
+  const evals = state.evaluations || [];
+  const topScore = evals.length > 0 ? (evals[0].screening_score || 0).toFixed(1) : '—';
+  document.getElementById('kpi-score').textContent = topScore;
+  document.getElementById('kpi-hours').textContent = ((kpi.candidates_processed || 0) * 1.5).toFixed(1) + 'h';
+
+  const container = document.getElementById('candidate-results');
+  if (evals.length === 0) {
+    container.innerHTML = '<div class="text-muted">No evaluation data available.</div>';
+    return;
+  }
+
+  // Sort by screening_score descending
+  const sorted = [...evals].sort((a, b) => (b.screening_score || 0) - (a.screening_score || 0));
+
+  container.innerHTML = sorted.map((ev, i) => {
+    const score = ev.screening_score || 0;
+    const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-n';
+    const barClass = score >= 7 ? 'score-high' : score >= 5 ? 'score-mid' : 'score-low';
+    const pct = score * 10;
+    const strengths = (ev.strengths || []).slice(0, 2).map(s => `<span class="badge badge-open" style="margin:2px;font-size:11px">✓ ${s}</span>`).join('');
+    const flags = (ev.red_flags || []).slice(0, 1).map(s => `<span class="badge badge-closed" style="margin:2px;font-size:11px">⚠ ${s}</span>`).join('');
+
+    return `
+      <div class="candidate-card">
+        <div class="rank-badge ${rankClass}">#${i + 1}</div>
+        <div class="candidate-info">
+          <h3>${ev.candidate_name || 'Candidate'}</h3>
+          <p style="margin-bottom:8px">${ev.screening_reasoning ? ev.screening_reasoning.slice(0, 120) + '...' : ''}</p>
+          <div>${strengths}${flags}</div>
+          <div style="margin-top:10px">
+            <div class="score-bar"><div class="score-fill ${barClass}" style="width:${pct}%"></div></div>
+          </div>
+        </div>
+        <div class="scores-grid">
+          <div class="score-item">
+            <label>Overall</label>
+            <div class="val" style="color:${score >= 7 ? 'var(--success)' : score >= 5 ? 'var(--warning)' : 'var(--danger)'}">${score.toFixed(1)}</div>
+          </div>
+          <div class="score-item">
+            <label>Skills</label>
+            <div class="val">${(ev.skills_score || 0).toFixed(1)}</div>
+          </div>
+          <div class="score-item">
+            <label>Exp.</label>
+            <div class="val">${(ev.experience_score || 0).toFixed(1)}</div>
+          </div>
+          <div class="score-item">
+            <label>Culture</label>
+            <div class="val">${(ev.culture_score || 0).toFixed(1)}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function downloadReport() {
+  if (!state.reportJobId) return;
+  window.open(`/workflow/report/${state.reportJobId}`, '_blank');
+}
+
+// ─── Candidates Page ─────────────────────────────────────────────────────────
+async function loadCandidates() {
+  const container = document.getElementById('candidates-list');
+  if (!state.clientId) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">👥</div><h3>No candidates yet</h3><p>Start a pipeline to add candidates</p></div>`;
+    return;
+  }
+  try {
+    const candidates = await api('GET', `/clients/${state.clientId}/candidates`);
+    if (candidates.length === 0) {
+      container.innerHTML = `<div class="empty-state"><div class="icon">👥</div><h3>No candidates yet</h3><p>Start a pipeline to add candidates</p></div>`;
+      return;
+    }
+    container.innerHTML = candidates.map(c => `
+      <div class="candidate-card" style="cursor:default">
+        <div style="font-size:28px">👤</div>
+        <div class="candidate-info">
+          <h3>${c.name}</h3>
+          <p>${c.current_role || ''} ${c.current_company ? 'at ' + c.current_company : ''}</p>
+          <div style="margin-top:6px">${(c.skills || []).slice(0,5).map(s => `<span class="badge badge-screening" style="margin:2px;font-size:11px">${s}</span>`).join('')}</div>
+        </div>
+        <div style="text-align:right;font-size:13px;color:var(--muted)">
+          <div>${c.years_experience ? c.years_experience + ' yrs exp' : ''}</div>
+          <div>${c.location || ''}</div>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    container.innerHTML = `<div class="alert alert-error">Error loading candidates: ${e.message}</div>`;
+  }
+}
+
+// ─── Tag inputs ──────────────────────────────────────────────────────────────
+function setupTagInput(inputId, containerId, arr) {
+  const input = document.getElementById(inputId);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const val = input.value.trim().replace(/,$/, '');
+      if (val && !arr.includes(val)) {
+        arr.push(val);
+        renderTags(containerId, inputId, arr);
+      }
+      input.value = '';
+    } else if (e.key === 'Backspace' && !input.value && arr.length) {
+      arr.pop();
+      renderTags(containerId, inputId, arr);
+    }
+  });
+}
+
+function renderTags(containerId, inputId, arr) {
+  const container = document.getElementById(containerId);
+  const input = document.getElementById(inputId);
+  const existing = container.querySelectorAll('.tag');
+  existing.forEach(t => t.remove());
+
+  arr.forEach((tag, i) => {
+    const el = document.createElement('span');
+    el.className = 'tag';
+    el.innerHTML = `${tag} <span class="tag-remove" onclick="removeTag('${containerId}','${inputId}',${i})">✕</span>`;
+    container.insertBefore(el, input);
+  });
+}
+
+function removeTag(containerId, inputId, i) {
+  if (containerId === 'skills-container') state.skills.splice(i, 1), renderTags(containerId, inputId, state.skills);
+  else state.niceToHave.splice(i, 1), renderTags(containerId, inputId, state.niceToHave);
+}
+
+// ─── LinkedIn ────────────────────────────────────────────────────────────────
+function addLinkedInEntry() {
+  const entry = document.createElement('div');
+  entry.className = 'linkedin-entry';
+  entry.innerHTML = `
+    <div style="font-size:20px;margin-top:2px">🔗</div>
+    <textarea placeholder="Paste LinkedIn profile text here..."></textarea>
+    <button class="btn btn-sm" style="color:var(--danger);background:none;border:none;cursor:pointer" onclick="this.closest('.linkedin-entry').remove()">✕</button>
+  `;
+  document.getElementById('linkedin-profiles').appendChild(entry);
+}
+
+// ─── Dropzone ────────────────────────────────────────────────────────────────
+function setupDropzone() {
+  const dz = document.getElementById('dropzone');
+  const input = document.getElementById('cv-file-input');
+
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault();
+    dz.classList.remove('drag-over');
+    handleFiles(e.dataTransfer.files);
+  });
+
+  input.addEventListener('change', () => handleFiles(input.files));
+}
+
+function handleFiles(files) {
+  const list = document.getElementById('file-list');
+  for (const file of files) {
+    if (state.cvFiles.find(f => f.name === file.name)) continue;
+    state.cvFiles.push(file);
+
+    const item = document.createElement('div');
+    item.className = 'file-item';
+    item.innerHTML = `
+      <div class="file-icon">📄</div>
+      <div>
+        <div class="file-name">${file.name}</div>
+        <div class="file-size">${(file.size / 1024).toFixed(0)} KB</div>
+      </div>
+      <span class="badge badge-open">Ready</span>
+    `;
+    list.appendChild(item);
+  }
+
+  // Update file input to include all files
+  const dt = new DataTransfer();
+  state.cvFiles.forEach(f => dt.items.add(f));
+  document.getElementById('cv-file-input').files = dt.files;
+}
+
+// ─── Salary period ───────────────────────────────────────────────────────────
+let salaryPeriod = 'monthly';
+
+function setSalaryPeriod(period) {
+  salaryPeriod = period;
+  const monthly = document.getElementById('period-monthly');
+  const yearly = document.getElementById('period-yearly');
+  const hint = document.getElementById('salary-hint');
+  if (period === 'monthly') {
+    monthly.style.background = 'var(--accent)'; monthly.style.color = 'white';
+    yearly.style.background = 'none'; yearly.style.color = 'var(--muted)';
+    hint.textContent = 'Monthly salary — will be converted to yearly for AI comparison';
+  } else {
+    yearly.style.background = 'var(--accent)'; yearly.style.color = 'white';
+    monthly.style.background = 'none'; monthly.style.color = 'var(--muted)';
+    hint.textContent = 'Yearly salary in USD';
+  }
+}
+
+function toYearly(val) {
+  if (val === null || isNaN(val)) return null;
+  return salaryPeriod === 'monthly' ? val * 12 : val;
+}
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+checkHealth();
+setupTagInput('skills-input', 'skills-container', state.skills);
+setupTagInput('nice-input', 'nice-container', state.niceToHave);
+setupDropzone();
+</script>
+</body>
+</html>
