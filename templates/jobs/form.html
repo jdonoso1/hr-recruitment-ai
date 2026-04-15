@@ -13,7 +13,10 @@
 
         <!-- Client selection (required) -->
         <div class="mb-6">
-            <label for="client_id" class="block text-sm font-medium text-gray-700 mb-2">Client *</label>
+            <div class="flex items-center justify-between mb-2">
+                <label for="client_id" class="block text-sm font-medium text-gray-700">Client *</label>
+                <a href="/clients/create" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">+ Add new client</a>
+            </div>
             <select id="client_id" name="client_id" class="form-input" required>
                 <option value="">Select a client...</option>
                 {% for client in clients %}
@@ -22,6 +25,9 @@
                 </option>
                 {% endfor %}
             </select>
+            {% if not clients %}
+            <p class="text-xs text-amber-600 mt-1">No clients yet. <a href="/clients/create" class="underline font-medium">Create your first client</a> before adding a job.</p>
+            {% endif %}
             {% if errors and 'client_id' in errors %}<p class="form-error">{{ errors['client_id'] }}</p>{% endif %}
         </div>
 
