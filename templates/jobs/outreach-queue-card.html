@@ -1,0 +1,55 @@
+{# One row of the outreach queue with its status timeline. Context: item (draft, candidate) #}
+{% set draft = item.draft %}
+{% set candidate = item.candidate %}
+{% set st = draft.status.value %}
+{% set fmt = '%b %d, %Y at %I:%M %p' %}
+{% set reached_sent = st in ['sent', 'replied', 'not_interested'] %}
+{% set outcome = st in ['replied', 'not_interested'] %}
+<div id="queue-{{ draft.id }}" class="bg-white border border-gray-200 rounded p-6 hover:shadow-md transition">
+    <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+            <h3 class="font-semibold text-gray-900">{{ candidate.name }}</h3>
+            <p class="text-sm text-gray-600">{{ candidate.current_title }} at {{ candidate.current_company }}</p>
+        </div>
+        <span class="badge-{{ st }} px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap">
+            {{ st.replace('_', ' ').title() }}
+        </span>
+    </div>
+
+    <!-- Timeline: created → approved → sent → outcome -->
+    <ol class="timeline text-sm">
+        <li class="done">
+            <span class="font-medium">Drafted</span>
+            <span class="text-gray-500">{{ draft.created_at.strftime(fmt) }}</span>
+        </li>
+        <li class="done">
+            <span class="font-medium">Approved</span>
+            {% if st == 'approved' %}<span class="text-gray-500">{{ draft.updated_at.strftime(fmt) }}</span>{% endif %}
+        </li>
+        <li class="{{ 'done' if reached_sent else ('failed' if st == 'error') }}">
+            <span class="font-medium">{{ 'Send failed' if st == 'error' else 'Sent' }}</span>
+            {% if draft.sent_at %}<span class="text-gray-500">{{ draft.sent_at.strftime(fmt) }}</span>{% endif %}
+        </li>
+        <li class="{{ 'done' if outcome }}">
+            <span class="font-medium">
+                {% if st == 'replied' %}Replied{% elif st == 'not_interested' %}Not interested{% else %}Response{% endif %}
+            </span>
+            {% if outcome %}<span class="text-gray-500">{{ draft.updated_at.strftime(fmt) }}</span>{% endif %}
+        </li>
+    </ol>
+
+    {% if st == 'sent' %}
+    <div class="flex flex-wrap gap-3 mt-4">
+        <button hx-post="/outreach/{{ draft.id }}/status" hx-vals='{"status": "replied"}'
+                hx-target="#queue-{{ draft.id }}" hx-swap="outerHTML"
+                class="btn-success text-sm">
+            Mark as Replied
+        </button>
+        <button hx-post="/outreach/{{ draft.id }}/status" hx-vals='{"status": "not_interested"}'
+                hx-target="#queue-{{ draft.id }}" hx-swap="outerHTML"
+                class="btn-secondary text-sm">
+            Not Interested
+        </button>
+    </div>
+    {% endif %}
+</div>

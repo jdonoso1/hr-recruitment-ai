@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Outreach Drafts: {{ job.title }} — HR Recruitment AI{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <a href="/jobs/{{ job.id }}" class="text-blue-600 hover:text-blue-700 text-sm">← Back to {{ job.title }}</a>
+    <div class="flex flex-wrap items-end justify-between gap-4 mt-2">
+        <div>
+            <h2 class="text-3xl font-bold">Outreach Drafts for {{ job.title }}</h2>
+            <p class="text-gray-600 mt-1">{{ counts.all }} drafts · {{ counts.pending_review }} pending review</p>
+        </div>
+        <div class="flex gap-3">
+            {% if awaiting_count and not generating %}
+            <form method="post" action="/outreach/generate">
+                <input type="hidden" name="job_id" value="{{ job.id }}">
+                <button type="submit" class="btn-primary">Generate Outreach ({{ awaiting_count }})</button>
+            </form>
+            {% endif %}
+            <a href="/jobs/{{ job.id }}/outreach/queue" class="btn-secondary">Queue &amp; Status</a>
+        </div>
+    </div>
+</div>
+
+{% if generating %}
+<div id="generating-banner" class="bg-blue-50 border border-blue-200 text-blue-900 rounded p-4 mb-6 text-sm">
+    AI is drafting outreach for {{ generating }} candidate{{ 's' if generating != 1 }}… drafts appear below as they're ready.
+</div>
+{% endif %}
+
+<!-- Filter tabs -->
+<div class="flex gap-6 border-b border-gray-200 mb-6 text-sm">
+    {% for key, label in [('all', 'All Drafts'), ('pending_review', 'Pending Review'), ('approved', 'Approved'), ('sent', 'Sent')] %}
+    <a href="?status={{ key }}" class="tab {% if active_filter == key %}tab-active{% endif %}">
+        {{ label }} <span class="text-gray-400">({{ counts[key] }})</span>
+    </a>
+    {% endfor %}
+</div>
+
+<div id="draft-list" class="flex flex-col gap-6"
+     {% if generating %}
+     hx-get="/jobs/{{ job.id }}/outreach/drafts/list?status={{ active_filter }}"
+     hx-trigger="every 3s"
+     hx-swap="innerHTML"
+     hx-on::after-request="if (event.detail.xhr.status === 286) window.location.replace('?status={{ active_filter }}')"
+     {% endif %}>
+    {% include "jobs/outreach-drafts-list.html" %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Tabs, edit toggle, and character counters. Delegated so it works on HTMX-swapped cards.
+document.addEventListener('click', (e) => {
+    const tab = e.target.closest('[data-tab]');
+    if (tab) {
+        const card = tab.closest('.draft-card');
+        card.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('tab-active', b === tab));
+        card.querySelectorAll('[data-pane]').forEach(p => { p.hidden = p.dataset.pane !== tab.dataset.tab; });
+        return;
+    }
+    const toggle = e.target.closest('[data-edit-toggle]');
+    if (toggle) {
+        const card = toggle.closest('.draft-card');
+        const editing = card.querySelector('[data-edit]').hidden;
+        card.querySelector('[data-edit]').hidden = !editing;
+        card.querySelector('[data-read]').hidden = editing;
+        card.querySelector('[data-actions]').hidden = editing;
+    }
+});
+document.addEventListener('input', (e) => {
+    if (e.target.matches('[data-counter]')) {
+        e.target.parentElement.querySelector('[data-count]').textContent = e.target.value.length;
+    }
+});
+</script>
+{% endblock %}

@@ -9,6 +9,7 @@ import json
 from ..db import get_session
 from ..models import Job, Client, JobStatus, utcnow
 from ..schemas import JobCreate, JobUpdate, JobRead, JobListItem
+from .outreach import outreach_summary
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -104,6 +105,7 @@ def job_detail_view(
     return templates.TemplateResponse(request, "jobs/detail.html", {
         "job": job,
         "client": client,
+        **outreach_summary(job.id, session),
     })
 
 

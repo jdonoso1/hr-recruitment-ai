@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Outreach Queue: {{ job.title }} — HR Recruitment AI{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <a href="/jobs/{{ job.id }}" class="text-blue-600 hover:text-blue-700 text-sm">← Back to {{ job.title }}</a>
+    <div class="flex flex-wrap items-end justify-between gap-4 mt-2">
+        <div>
+            <h2 class="text-3xl font-bold">Outreach Queue &amp; Status for {{ job.title }}</h2>
+            <p class="text-gray-600 mt-1">{{ approved_count }} approved and ready to send</p>
+        </div>
+        <a href="/jobs/{{ job.id }}/outreach/drafts" class="btn-secondary">Review Drafts</a>
+    </div>
+</div>
+
+{% if just_sent %}
+<div class="bg-green-50 border border-green-200 text-green-900 rounded p-4 mb-6 text-sm">
+    Marked {{ just_sent }} message{{ 's' if just_sent != 1 }} as sent.
+    <span class="text-green-800">(Delivery isn't connected yet; send them from LinkedIn or email yourself.)</span>
+</div>
+{% endif %}
+
+{% if approved_count %}
+<form method="post" action="/outreach/queue/send" class="mb-6"
+      onsubmit="return confirm('Send {{ approved_count }} approved message{{ 's' if approved_count != 1 }}?')">
+    <input type="hidden" name="job_id" value="{{ job.id }}">
+    <button type="submit" class="btn-success inline-flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+        </svg>
+        Send {{ approved_count }} Approved Message{{ 's' if approved_count != 1 }}
+    </button>
+</form>
+{% endif %}
+
+{% if items %}
+<div class="flex flex-col gap-6">
+    {% for item in items %}
+        {% include "jobs/outreach-queue-card.html" %}
+    {% endfor %}
+</div>
+{% else %}
+<div class="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center text-gray-600">
+    <p class="font-medium text-gray-900">No approved drafts yet</p>
+    <p class="text-sm mt-1">Review drafts to approve them.</p>
+</div>
+{% endif %}
+{% endblock %}

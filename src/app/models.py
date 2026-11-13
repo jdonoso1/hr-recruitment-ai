@@ -40,7 +40,8 @@ class OutreachStatus(str, Enum):
     sent = "sent"
     replied = "replied"
     not_interested = "not_interested"
-    error = "error"
+    discarded = "discarded"  # consultant discarded the draft (kept for history)
+    error = "error"  # sending failed
 
 
 class Client(SQLModel, table=True):

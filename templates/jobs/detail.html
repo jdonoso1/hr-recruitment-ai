@@ -99,6 +99,24 @@
                 Start Hunting
             </a>
 
+            {% if awaiting_outreach_count %}
+            <form method="post" action="/outreach/generate" class="mb-3">
+                <input type="hidden" name="job_id" value="{{ job.id }}">
+                <button type="submit" class="btn-primary w-full">
+                    Generate Outreach ({{ awaiting_outreach_count }} candidate{{ 's' if awaiting_outreach_count != 1 }})
+                </button>
+            </form>
+            {% endif %}
+
+            {% if draft_count %}
+            <a href="/jobs/{{ job.id }}/outreach/drafts" class="btn-secondary w-full text-center mb-3">
+                View Outreach Drafts ({{ draft_count }})
+            </a>
+            <a href="/jobs/{{ job.id }}/outreach/queue" class="btn-secondary w-full text-center mb-3">
+                Outreach Queue{% if approved_draft_count %} ({{ approved_draft_count }} ready){% endif %}
+            </a>
+            {% endif %}
+
             <a href="/jobs/{{ job.id }}/edit" class="btn-secondary w-full text-center mb-3">Edit Job</a>
 
             <button hx-post="/jobs/{{ job.id }}/archive" hx-target="body" class="btn-destructive w-full" onclick="return confirm('Archive this job? You can reopen it anytime.')">

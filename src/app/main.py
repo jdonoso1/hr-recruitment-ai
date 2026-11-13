@@ -6,8 +6,10 @@ from pathlib import Path
 
 # Import database and models to ensure SQLModel metadata is loaded
 from .db import create_db_tables
-from .models import Client, Job, JobStatus  # Import to ensure models are registered
-from .routes import jobs, clients, hunting
+from .models import (  # Import to ensure models are registered
+    Client, Job, JobStatus, HuntingSession, TargetCompany, Candidate, OutreachDraft
+)
+from .routes import jobs, clients, hunting, outreach
 
 # Lifespan event to create database tables on startup
 @asynccontextmanager
@@ -36,6 +38,7 @@ app.include_router(jobs.router)
 app.include_router(clients.router)
 app.include_router(hunting.router)
 app.include_router(hunting.hunting_router)
+app.include_router(outreach.router)
 
 # Add CORS middleware (for later frontend integration if needed)
 app.add_middleware(
