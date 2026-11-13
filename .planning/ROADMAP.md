@@ -33,14 +33,14 @@
 
 ---
 
-## Phase 2: Hunting & Outreach — AI Candidate Discovery
+## Phase 2: Hunting & Outreach — AI Candidate Discovery ✓ COMPLETE
 **Goal:** Given a job, AI identifies target companies, finds the right people, and drafts personalized outreach. Consultant reviews and approves before anything is sent.
 
 **Requirements covered:** HUNT-01, HUNT-02, HUNT-03, HUNT-04, OUTR-01, OUTR-02, OUTR-03, OUTR-04
 
 **Plans:** 3 plans in 3 waves
 
-### Plan 01 — Data models & AI agent infrastructure
+### Plan 01 — Data models & AI agent infrastructure ✓ COMPLETE
 - Database models: HuntingSession, TargetCompany, Candidate, OutreachDraft
 - Status enums: HuntingStatus, CandidateStatus, OutreachStatus
 - Anthropic SDK integration (claude-haiku-4-5 for cost efficiency)
@@ -49,7 +49,7 @@
 - Test infrastructure for agent testing
 - 6 tasks, creates src/app/agents/ module, updates pyproject.toml with anthropic SDK
 
-### Plan 02 — Company mapping + role identification UI
+### Plan 02 — Company mapping + role identification UI ✓ COMPLETE
 - FastAPI routes for hunting workflows: start session, list companies, approve/reject candidates
 - RoleIdentifierAgent (discovers candidates at target companies)
 - Jinja2 templates: hunting-companies.html, hunting-candidates.html
@@ -60,7 +60,7 @@
 - HTMX integration for async updates
 - Integration tests for routes and agent
 
-### Plan 03 — Outreach drafting agent + approval flow
+### Plan 03 — Outreach drafting agent + approval flow ✓ COMPLETE
 - OutreachDrafterAgent (generates LinkedIn message + email per candidate)
 - FastAPI routes: generate drafts, list/edit/approve/discard drafts, queue for sending
 - Jinja2 templates: outreach-drafts.html (draft review with tabs and edit), outreach-queue.html (status tracking)
@@ -149,4 +149,4 @@ This is a deployable, sellable product for the first client.
 ---
 
 *Roadmap created: 2026-03-23*
-*Last updated: 2026-03-24 — Phase 2 plans created*
+*Last updated: 2026-11-13 — Phase 2 complete (Plan 03: outreach drafting & approval)*

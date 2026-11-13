@@ -21,10 +21,10 @@
 
 ### Outreach
 
-- [ ] **OUTR-01**: AI drafts a personalized LinkedIn message per candidate based on the JD
-- [ ] **OUTR-02**: AI drafts a personalized email per candidate based on the JD
-- [ ] **OUTR-03**: Consultant can approve, edit, or reject each draft before it is sent
-- [ ] **OUTR-04**: System tracks outreach status per candidate (pending, sent, replied, not interested)
+- [x] **OUTR-01**: AI drafts a personalized LinkedIn message per candidate based on the JD
+- [x] **OUTR-02**: AI drafts a personalized email per candidate based on the JD
+- [x] **OUTR-03**: Consultant can approve, edit, or reject each draft before it is sent
+- [x] **OUTR-04**: System tracks outreach status per candidate (pending, sent, replied, not interested)
 
 ### Candidate Management
 
@@ -98,10 +98,10 @@
 | HUNT-02 | Phase 2 | Pending |
 | HUNT-03 | Phase 2 | Pending |
 | HUNT-04 | Phase 2 | Pending |
-| OUTR-01 | Phase 2 | Pending |
-| OUTR-02 | Phase 2 | Pending |
-| OUTR-03 | Phase 2 | Pending |
-| OUTR-04 | Phase 2 | Pending |
+| OUTR-01 | Phase 2 | Complete |
+| OUTR-02 | Phase 2 | Complete |
+| OUTR-03 | Phase 2 | Complete |
+| OUTR-04 | Phase 2 | Complete |
 | CAND-01 | Phase 3 | Pending |
 | CAND-02 | Phase 3 | Pending |
 | CAND-03 | Phase 3 | Pending |
