@@ -20,7 +20,7 @@ from pathlib import Path
 from ..db import get_session
 from ..models import (
     Job, HuntingSession, TargetCompany, Candidate,
-    HuntingStatus, CandidateStatus
+    HuntingStatus, CandidateStatus, utcnow
 )
 from ..agents.company_mapper import CompanyMapperAgent, CompanyMapperRequest
 from ..agents.role_identifier import RoleIdentifierAgent, RoleIdentifierRequest
@@ -62,7 +62,7 @@ async def run_company_mapper(job_id: int, session: Session, background_tasks: Ba
 
             # Update session status
             hunting_session.status = HuntingStatus.in_progress
-            hunting_session.started_at = datetime.utcnow()
+            hunting_session.started_at = utcnow()
             bg_session.add(hunting_session)
             bg_session.commit()
 
@@ -95,7 +95,7 @@ async def run_company_mapper(job_id: int, session: Session, background_tasks: Ba
 
                     # Update session status
                     hunting_session.status = HuntingStatus.completed
-                    hunting_session.completed_at = datetime.utcnow()
+                    hunting_session.completed_at = utcnow()
                     bg_session.add(hunting_session)
                     bg_session.commit()
             except Exception as e:
@@ -312,7 +312,7 @@ def approve_candidate(
         raise HTTPException(status_code=404, detail="Candidate not found")
 
     candidate.status = CandidateStatus.approved
-    candidate.updated_at = datetime.utcnow()
+    candidate.updated_at = utcnow()
     session.add(candidate)
     session.commit()
 
@@ -334,7 +334,7 @@ def reject_candidate(
         raise HTTPException(status_code=404, detail="Candidate not found")
 
     candidate.status = CandidateStatus.rejected
-    candidate.updated_at = datetime.utcnow()
+    candidate.updated_at = utcnow()
     session.add(candidate)
     session.commit()
 

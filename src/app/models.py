@@ -1,8 +1,13 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional, List
 from sqlalchemy import Column, JSON
 from sqlmodel import SQLModel, Field
+
+
+def utcnow() -> datetime:
+    """Timezone-aware current UTC time (SQLModel rejects naive datetimes)."""
+    return datetime.now(timezone.utc)
 
 
 class JobStatus(str, Enum):
@@ -42,7 +47,7 @@ class Client(SQLModel, table=True):
     """Client entity for JOB-01 scope (minimal creation)"""
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(index=True)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=utcnow)
 
 
 class Job(SQLModel, table=True):
@@ -68,8 +73,8 @@ class Job(SQLModel, table=True):
     status: JobStatus = Field(default=JobStatus.hunting, index=True)
 
     # Lifecycle timestamps
-    created_at: datetime = Field(default_factory=datetime.utcnow, index=True)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=utcnow, index=True)
+    updated_at: datetime = Field(default_factory=utcnow)
 
 
 class HuntingSession(SQLModel, table=True):
@@ -79,8 +84,8 @@ class HuntingSession(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     job_id: int = Field(foreign_key="job.id", index=True)
     status: HuntingStatus = Field(default=HuntingStatus.pending, index=True)
-    created_at: datetime = Field(default_factory=datetime.utcnow, index=True)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=utcnow, index=True)
+    updated_at: datetime = Field(default_factory=utcnow)
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
 
@@ -95,7 +100,7 @@ class TargetCompany(SQLModel, table=True):
     industry: str
     size_description: str  # e.g., "50-200 employees"
     linkedin_url: Optional[str] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow, index=True)
+    created_at: datetime = Field(default_factory=utcnow, index=True)
 
 
 class Candidate(SQLModel, table=True):
@@ -111,8 +116,8 @@ class Candidate(SQLModel, table=True):
     email: Optional[str] = None
     linkedin_url: Optional[str] = None
     status: CandidateStatus = Field(default=CandidateStatus.hunting, index=True)
-    created_at: datetime = Field(default_factory=datetime.utcnow, index=True)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=utcnow, index=True)
+    updated_at: datetime = Field(default_factory=utcnow)
 
 
 class OutreachDraft(SQLModel, table=True):
@@ -125,6 +130,6 @@ class OutreachDraft(SQLModel, table=True):
     linkedin_message: str = Field(max_length=10000)
     email_message: str = Field(max_length=10000)
     status: OutreachStatus = Field(default=OutreachStatus.pending_review, index=True)
-    created_at: datetime = Field(default_factory=datetime.utcnow, index=True)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=utcnow, index=True)
+    updated_at: datetime = Field(default_factory=utcnow)
     sent_at: Optional[datetime] = None

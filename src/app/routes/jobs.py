@@ -7,7 +7,7 @@ from pathlib import Path
 import json
 
 from ..db import get_session
-from ..models import Job, Client, JobStatus
+from ..models import Job, Client, JobStatus, utcnow
 from ..schemas import JobCreate, JobUpdate, JobRead, JobListItem
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
@@ -195,7 +195,7 @@ def update_job_form(
     job.required_experience_years = required_experience_years
     job.target_industries = industries
     job.target_company_types = company_types
-    job.updated_at = datetime.utcnow()
+    job.updated_at = utcnow()
 
     session.add(job)
     session.commit()
@@ -277,7 +277,7 @@ def update_job_api(
     for field, value in update_data.items():
         setattr(job, field, value)
 
-    job.updated_at = datetime.utcnow()
+    job.updated_at = utcnow()
     session.add(job)
     session.commit()
     session.refresh(job)
@@ -300,7 +300,7 @@ def archive_job(
         raise HTTPException(status_code=404, detail="Job not found")
 
     job.status = JobStatus.closed
-    job.updated_at = datetime.utcnow()
+    job.updated_at = utcnow()
     session.add(job)
     session.commit()
     session.refresh(job)
@@ -321,7 +321,7 @@ def update_job_status(
         raise HTTPException(status_code=404, detail="Job not found")
 
     job.status = status
-    job.updated_at = datetime.utcnow()
+    job.updated_at = utcnow()
     session.add(job)
     session.commit()
     session.refresh(job)
